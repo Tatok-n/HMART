@@ -57,15 +57,14 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   List<String> _messages = [];
   List<bool> _isUserMsg = [];
-   final ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
 
-  void _sendMessage() async{
-    String response = await apicaller.getResponseString(_controller.text);
-    if (_controller.text.isNotEmpty) {
+  void _sendMessage(bool isUserMsg, String message) async{
+    if (_controller.text.isNotEmpty || !isUserMsg) {
       setState(() {
-        _messages.add(_controller.text);
-        _isUserMsg.add(true);
-        sendChat(response);
+        _messages.add(message);
+        _isUserMsg.add(isUserMsg);
         _controller.clear();
           _scrollToBottom();
       });
@@ -83,12 +82,9 @@ class _ChatScreenState extends State<ChatScreen> {
     
   }
 
-  void sendChat(String messageContent) {
-    setState(() {
-      _messages.add(messageContent);
-      _isUserMsg.add(false);
-        _scrollToBottom();
-    });
+  void processResponse(String messageContent) async {
+    String response = await apicaller.getResponseString(messageContent);
+    _sendMessage(false,response);
   }
 
 
@@ -110,7 +106,7 @@ void playShrek() async {
     MainAxisAlignment alignment;
     Color bubbleColor;
     Color textColor;
-    
+
           double position = _messages.length > 1
       ? (index==(_messages.length-1) ? 0.0 : index / (_messages.length - 1).toDouble())
       : .0;
@@ -140,6 +136,29 @@ void playShrek() async {
                     ),
                   );
   }
+
+    Widget _buildAnimatedItem(BuildContext context, int index, Animation<double> animation) {
+    return SizeTransition(
+      sizeFactor: animation, 
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+        child: Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.blueAccent,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Text(
+            _messages[index],
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+      ),
+    );
+  }
+
+
+
 
   @override
 Widget build(BuildContext context) {
@@ -215,13 +234,19 @@ Widget build(BuildContext context) {
                             hintText: 'Type a message',
                             border: InputBorder.none, 
                           ),
-                          onEditingComplete: _sendMessage,
+                          onEditingComplete: ()  {
+                            String prompt = _controller.text;
+                            _sendMessage(true,_controller.text);
+                            processResponse(prompt);
+                           },
                           style: const TextStyle(color: Colors.white),
                         ),
                       ),IconButton(
                         icon: const Icon(Icons.send, color: Color.fromARGB(255, 153, 0, 255)),
                         onPressed: () {
-                          _sendMessage();
+                          String text = _controller.text;
+                          _sendMessage(true,_controller.text);
+                          processResponse(text);
                         },
                       ),
                     ],
