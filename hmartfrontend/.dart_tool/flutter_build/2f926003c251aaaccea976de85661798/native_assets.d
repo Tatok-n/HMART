@@ -1,0 +1,1 @@
+ D:\\Repos\\HMART\\HMART\\hmartfrontend\\.dart_tool\\flutter_build\\2f926003c251aaaccea976de85661798\\native_assets.yaml: 

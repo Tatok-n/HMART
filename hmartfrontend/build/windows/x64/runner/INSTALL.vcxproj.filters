@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\Repos\HMART\HMART\hmartfrontend\build\windows\x64\CMakeFiles\fa0041d219471e71782d29b9e62a96fc\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{73B9DC65-7AFB-368A-89B6-3CFE0A26D7E8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

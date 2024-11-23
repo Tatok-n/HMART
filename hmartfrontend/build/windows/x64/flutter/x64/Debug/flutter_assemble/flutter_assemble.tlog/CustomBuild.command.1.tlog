@@ -1,0 +1,28 @@
+^D:\REPOS\HMART\HMART\HMARTFRONTEND\BUILD\WINDOWS\X64\CMAKEFILES\16ABBA2008A223D0A83892A2936CDBF6\FLUTTER_WINDOWS.DLL.RULE
+setlocal
+"C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E env FLUTTER_ROOT=C:\Users\tarek\Downloads\flutterSDK\flutter PROJECT_DIR=D:\Repos\HMART\HMART\hmartfrontend FLUTTER_ROOT=C:\Users\tarek\Downloads\flutterSDK\flutter FLUTTER_EPHEMERAL_DIR=D:\Repos\HMART\HMART\hmartfrontend\windows\flutter\ephemeral PROJECT_DIR=D:\Repos\HMART\HMART\hmartfrontend FLUTTER_TARGET=D:\Repos\HMART\HMART\hmartfrontend\lib\main.dart DART_OBFUSCATION=false TRACK_WIDGET_CREATION=true TREE_SHAKE_ICONS=false PACKAGE_CONFIG=D:\Repos\HMART\HMART\hmartfrontend\.dart_tool\package_config.json C:/Users/tarek/Downloads/flutterSDK/flutter/packages/flutter_tools/bin/tool_backend.bat windows-x64 Debug
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^D:\REPOS\HMART\HMART\HMARTFRONTEND\BUILD\WINDOWS\X64\CMAKEFILES\4937B853E880942971DEE1595DEF2CD0\FLUTTER_ASSEMBLE.RULE
+setlocal
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^D:\REPOS\HMART\HMART\HMARTFRONTEND\WINDOWS\FLUTTER\CMAKELISTS.TXT
+setlocal
+"C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SD:/Repos/HMART/HMART/hmartfrontend/windows -BD:/Repos/HMART/HMART/hmartfrontend/build/windows/x64 --check-stamp-file D:/Repos/HMART/HMART/hmartfrontend/build/windows/x64/flutter/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
