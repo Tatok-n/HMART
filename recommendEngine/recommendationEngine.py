@@ -44,9 +44,15 @@ def recommend_cars(filtered_data, top_n=3):
     return "\n".join(f"{i+1}. VIN: {row['VIN']}, Price: {row['SellingPrice']}, Miles: {row['Miles']}"
                      for i, row in best_cars.iterrows())
 
-def recommend(type, year, make, model, body, door, extColor, intColor, engineCylinder, transmission, engineBlock, engineDesc, fuel, driveTrain, mktClass, capacity, mileage):
+def recommend(type, year, make, model, body, door, extColor, intColor, engineCylinder, transmission, engineBlock, engineDesc, fuel, driveTrain, mktClass, capacity, mileage, mpg, price):
     
-    mileage_range = { "veryLow":(0,20000), "low":(20000,40000),"medium":(40000,60000),"high":(60000,80000),"veryHigh":(80000,100000)}
+    mileageRange = { "veryLow":(0,20000), "low":(20001,40000),"medium":(40001,60000),"high":(60001,80000),"veryHigh":(80001,)}
+    
+    cityRange = { "veryLow":(0,20), "low":(21,40),"medium":(41,60),"high":(61,80),"veryHigh":(81,)}
+    
+    highwayRange = { "veryLow":(0,25), "low":(26,50),"medium":(51,75),"high":(76,100),"veryHigh":(101,)}
+    
+    priceRange = { "veryLow":(0,10000), "low":(10001,25000),"medium":(25001,50000),"high":(500001,75000),"veryHigh":(1000000,)}
     
     filters = {
         "type": type,
@@ -64,8 +70,11 @@ def recommend(type, year, make, model, body, door, extColor, intColor, engineCyl
         "fuel": fuel,
         "driveTrain": driveTrain,
         "mktClass": mktClass,
-        "capacity": capacity
-        "mileage" : mileage_range[mileage]
+        "capacity": capacity,
+        "mileage" : mileageRange[mileage],
+        "cityMPG" : cityRange[mpg],
+        "highwayMPG" : highwayRange[mpg],
+        "price" : priceRange[price]
     }
     # Load the dataset
     car_data = pd.read_csv("vehicles-cleaned.csv")
@@ -87,4 +96,4 @@ def recommend(type, year, make, model, body, door, extColor, intColor, engineCyl
     print(recommendation)
 
 if __name__ == "__main__":
-    main()
+    recommend()
