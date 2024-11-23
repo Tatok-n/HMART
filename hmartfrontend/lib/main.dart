@@ -1,5 +1,5 @@
 import 'dart:math';
-
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 
@@ -9,6 +9,8 @@ void main() {
 
 double screenWidth = 0;
 double screenHeight = 0;
+
+final player=AudioPlayer();
 
 double _size1 = 24;
 double _size2 = 20;
@@ -92,8 +94,14 @@ void showShrek(BuildContext context) async {
     builder: (_) => ImagePrompt(),
   ).then((_) {
     _SHREK = false;
+    player.stop();
   });
 }
+
+void playShrek() async {
+  await player.play(AssetSource("sounds/580590_All-Star-8bit-Remix.mp3"));
+}
+
 
 
   
@@ -168,9 +176,9 @@ Widget build(BuildContext context) {
                          if (index == length-1) {
                           if (_messages[index] == "shrek" ) 
                           {
-                            print("shreked");
                             _SHREK = true;
                             WidgetsBinding.instance.addPostFrameCallback((_) {
+                            playShrek();
                             showShrek(context);
                             });
                             }

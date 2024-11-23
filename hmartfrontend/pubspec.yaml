@@ -36,6 +36,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   flutter_chat_ui: ^1.6.15
+  audioplayers: ^6.1.0
 
 dev_dependencies:
   flutter_test:
@@ -62,6 +63,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/SUPER_SECRET_ASSET.png
+    - assets/sounds/580590_All-Star-8bit-Remix.mp3
 
   # To add assets to your application, add an assets section, like this:
   # assets:
