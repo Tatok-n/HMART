@@ -2,7 +2,7 @@
 
 # Define input file and an array of output file names
 input_file="vehiclesCleaned.csv"
-output_files=("years" "makes" "models" "bodies" "doors" "extColors" "intColors" "engineCylinders" "transmissions")
+output_files=("years" "makes" "models" "bodies" "doors" "extColors" "intColors" "engineCylinders" "transmissions" "engineBlocks" "engineDescs" "fuels" "driveTrain" "mktClasses" "passCap")
 
 # Check if the input file exists
 if [[ ! -f "$input_file" ]]; then
@@ -11,10 +11,10 @@ if [[ ! -f "$input_file" ]]; then
 fi
 
 # Loop through column numbers and corresponding output files
-for i in {3..11}; do
+for i in {3..17}; do
     index=$((i - 2))                        # Index for output_files array
     output_file="${output_files[index]}.csv"  # Construct output filename
-    csvcut -c "$i" "$input_file" | sort -u > "$output_file"
+    tail -n +2 "$input_file" | csvcut -c "$i"| sort -u > "./featuresLib/$output_file"
 done
 
 
