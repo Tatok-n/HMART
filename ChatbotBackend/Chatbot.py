@@ -132,6 +132,7 @@ while not is_full(user_answers, required_keys):
             off_topic_reply = off_topic_response["choices"][0]["message"]["content"]
             print(off_topic_reply)
 
+
             # Add the off-topic reply to the conversation history
             conversation.append({"role": "assistant", "content": off_topic_reply})
 
