@@ -44,11 +44,10 @@ openai.api_key = "my api key but i dont want people to see it rn lol"
 
 
 
-def ask_gpt():
+def ask_gpt(string):
     #Ask ChatGPT 
     prompt = (
-        f"The user answered '{response}' to the question '{question}', determine the personality trait that comes from this response. You must choose something, you cannot say that it answers none"
-        "Choose from: Adventurous, Eco-conscious, Luxury-loving, Practical, Tech-savvy, Show-off, or Performance-Oriented"
+        f"'{string}'"
     )
     # Generates a response from ChatGPT
     try:
@@ -64,8 +63,6 @@ def ask_gpt():
         print(f"Error: {e}")
         return "Unknown"
 
-    
-    
 
 
 def is_full(dictionary, required_keys):
@@ -143,8 +140,29 @@ while not is_full(user_answers, required_keys):
             print(f"Now, going back to the question: {question}")
         user_answers[question] = user_input
 
+summarize_answers = (f"I have a dictionary '{user_answers}' which contains a question in the key position and an answer in the value position"
+            "I want you to take the user's answers and return them as a one word answer. We gave them freedom to type and its now your job to summarize the answers"
+            "Answers that insinuate that the user does not mind you should return as No preference "
+            "Return a list of answers, keep them in order"
+            "So: 'Are you looking for a new or used car?' the answer should be either new, used, or No preference"
+            "'What year does the car need to be at minimum?' the answer should be a year or No preference"
+            "'Do you have a favorite car brand or a specific manufacturer in mind?' the answer should be a car brand name, or No preference"
+            "'Would you prefer a sleek, sporty design or something more spacious like an SUV or sedan?' the answer should be SUV, Sedan, Coupe, or No preference"
+            "'Do you prefer a car with easy access, like a four-door sedan, or would a two-door coupe be more your style?' the answer should be 4,2, or No preference "
+            "'Is there a specific color that catches your eye when you're looking for a car?' the answer should return a color or No preference"
+            "'When sitting inside a car, do you like a lighter, airy feel or something darker and more elegant?' the answer should be light interior, dark interior or No preference"
+            "'Do you prefer a car that shifts gears manually, or are you more comfortable with automatic transmission?' the answer should be automatic, manual or No preference"
+            "'What is the maximum mileage the car can have?' the answer should be a number or No preference"
+            "'What kind of budget are you thinking about for your car? Do you have a price range in mind?' the answer should be a number, range of numbers, or No preference"
+            "'Are you leaning toward an eco-friendly car (electric or hybrid) or prefer a traditional petrol/diesel vehicle?' the answer should be electric, hybrid, fuel, diesel, or No preference "
+            "'How many people do you usually travel with? Do you need a car that fits the family or a smaller one for personal trips?' the answer should give a number or No preference")
 
-
-print("Please wait while I give you the dealership's recommendations.")
+final_extraction_info = ask_gpt(summarize_answers)
+print(final_extraction_info)
+print("Please wait while I search for the dealership's recommendations.")
+#mathis' call for the pytorch filtering comes here
+#Assuming Reina gets the 3 VIN numbers
+#Reina runs the hashmap code to find the cars
 print("Press the button to view the recommendations")
-print(user_answers)
+
+
