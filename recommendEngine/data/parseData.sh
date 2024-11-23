@@ -2,7 +2,7 @@
 
 # Define input file and an array of output file names
 input_file="vehiclesCleaned.csv"
-output_files=("years" "makes" "models" "bodies" "doors" "extColors" "intColors" "engineCylinders" "transmissions" "engineBlocks" "engineDescs" "fuels" "driveTrain" "mktClasses" "capacity" "cityMileage" "highwayMileage" "mileage" "Price" )
+output_files=("years" "makes" "models" "bodies" "doors" "extColors" "intColors" "engineCylinders" "transmissions" "mileage" "price" "engineBlocks" "engineDescs" "driveTrain" "fuels" "cityMileage" "highwayMileage" "mktClasses" "capacity")
 
 # Check if the input file exists
 if [[ ! -f "$input_file" ]]; then
