@@ -21,6 +21,7 @@ Color gradientStartUser = Color.fromARGB(255, 223, 189, 255);
 Color gradientEndUser = Color.fromARGB(255, 255, 255, 255);
 
 bool _reccomendInStock = false;
+bool _SHREK= false;
 
 
 class MyApp extends StatelessWidget {
@@ -84,6 +85,17 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+
+void showShrek(BuildContext context) async {
+  await showDialog(
+    context: context,
+    builder: (_) => ImagePrompt(),
+  ).then((_) {
+    _SHREK = false;
+  });
+}
+
+
   
 
   Widget bubble(String content, bool isUserMessage,index) {
@@ -104,7 +116,7 @@ class _ChatScreenState extends State<ChatScreen> {
        textColor = const Color.fromARGB(255, 233, 213, 255);
     }
     return Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: Row(
                       mainAxisAlignment : alignment,
                       children: [Container(
@@ -151,8 +163,17 @@ Widget build(BuildContext context) {
                   controller: _scrollController,
                   itemCount: _messages.length,
                   itemBuilder: (context, index) {
+                         
                          int length = _messages.length;
                          if (index == length-1) {
+                          if (_messages[index] == "shrek" ) 
+                          {
+                            print("shreked");
+                            _SHREK = true;
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                            showShrek(context);
+                            });
+                            }
                              return Padding(
                                padding: const EdgeInsets.only(bottom: 150),
                                child: bubble(_messages[index], _isUserMsg[index], index),
@@ -217,6 +238,23 @@ Widget build(BuildContext context) {
     ),
   );
 }
+  }
 
-
+  class ImagePrompt extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Container(
+        width: 600,
+        height: 600,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(26.0),
+          image: DecorationImage(
+            image: ExactAssetImage('assets/SUPER_SECRET_ASSET.png'),
+            fit: BoxFit.cover
+          )
+        ),
+      ),
+    );
+  }
   }
