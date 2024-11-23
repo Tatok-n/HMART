@@ -29,6 +29,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     screenWidth = MediaQuery.of(context).size.width;
     screenHeight = MediaQuery.of(context).size.height;
+    
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
@@ -45,11 +46,11 @@ class ChatScreen extends StatefulWidget {
   @override
   _ChatScreenState createState() => _ChatScreenState();
 }
-
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   List<String> _messages = [];
   List<bool> _isUserMsg = [];
+   final ScrollController _scrollController = ScrollController();
 
   void _sendMessage() {
     if (_controller.text.isNotEmpty) {
@@ -58,8 +59,18 @@ class _ChatScreenState extends State<ChatScreen> {
         _isUserMsg.add(true);
         sendChat(_controller.text); //just for now :)
         _controller.clear();
+          _scrollToBottom();
       });
     }
+    
+  }
+
+   void _scrollToBottom() {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: Duration(milliseconds: 300), // Smooth scrolling
+        curve: Curves.easeOut,
+      );
     
   }
 
@@ -67,8 +78,11 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _messages.add(messageContent);
       _isUserMsg.add(false);
+        _scrollToBottom();
     });
   }
+
+  
 
   Widget bubble(String content, bool isUserMessage,index) {
     MainAxisAlignment alignment;
@@ -132,10 +146,18 @@ Widget build(BuildContext context) {
               child: Container(
                 color: Colors.black,
                 child: ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 100),
+                  controller: _scrollController,
                   itemCount: _messages.length,
                   itemBuilder: (context, index) {
-                      return bubble(_messages[index], _isUserMsg[index], index);
+                         int length = _messages.length;
+                         if (index == length-1) {
+                             return Padding(
+                               padding: const EdgeInsets.only(bottom: 250),
+                               child: bubble(_messages[index], _isUserMsg[index], index),
+                             );
+                         } else {
+                             return bubble(_messages[index], _isUserMsg[index], length-index);
+                         }
                   }
                 ),
               ),
@@ -177,7 +199,10 @@ Widget build(BuildContext context) {
                         ),
                       ),IconButton(
                         icon: const Icon(Icons.send, color: Color.fromARGB(255, 153, 0, 255)),
-                        onPressed: _sendMessage,
+                        onPressed: () {
+                        setState(() {
+                          _sendMessage();
+                        });},
                       ),
                     ],
                   ),
