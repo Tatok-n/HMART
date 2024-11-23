@@ -8,11 +8,17 @@ void main() {
 double screenWidth = 0;
 double screenHeight = 0;
 
+double _size1 = 24;
+double _size2 = 20;
+double _size3 = 18;
+
 Color gradientStartBot = Color.fromARGB(255, 153, 0, 255);
 Color gradientEndBot = Color.fromARGB(255, 143, 45, 255);
 
 Color gradientStartUser = Color.fromARGB(255, 255, 255, 255);
 Color gradientEndUser = Color.fromARGB(255, 187, 187, 187);
+
+bool _reccomendInStock = false;
 
 
 class MyApp extends StatelessWidget {
@@ -74,12 +80,12 @@ class _ChatScreenState extends State<ChatScreen> {
     if (isUserMessage) {
       alignment = MainAxisAlignment.end;
       bubbleColor = Color.lerp(gradientStartUser, gradientEndUser, position)!;
-      textColor = Colors.black;
+      textColor = const Color.fromARGB(255, 21, 0, 46);
 
     } else {
       alignment = MainAxisAlignment.start;
        bubbleColor = Color.lerp(gradientStartBot, gradientStartBot, position)!;
-       textColor = Colors.white;
+       textColor = const Color.fromARGB(255, 233, 213, 255);
     }
     return Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -89,12 +95,11 @@ class _ChatScreenState extends State<ChatScreen> {
                         constraints: BoxConstraints(
                           maxWidth: screenWidth*0.8
                         ),
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                         decoration: BoxDecoration(borderRadius: BorderRadius.circular(25),
                           color: bubbleColor,
-                          border: Border.all(color: Color.fromARGB(255, 70, 0, 201)),
                           ),
-                        child: Text(content,  style: TextStyle(color: textColor)))]
+                        child: Text(content,  style: TextStyle(color: textColor, fontSize: _size3)))]
                     ),
                   );
   }
@@ -103,30 +108,42 @@ class _ChatScreenState extends State<ChatScreen> {
 Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
-      title: Text('Chatbot'),
+      actions : [Row(
+        children: [
+          Text("Only reccoment in stock", style: TextStyle(color: Colors.white, fontSize: _size2),),
+          Padding(padding: EdgeInsets.all(8)),
+           Switch(value: _reccomendInStock,   onChanged: (value) {
+                  setState(() {
+                    _reccomendInStock = value;
+                  });
+                },)
+        ],
+      )]  ,
+      title: const Text('Chatbot'),
       flexibleSpace: Container(decoration: 
-      BoxDecoration( gradient: LinearGradient( begin: Alignment.topRight, end: Alignment.bottomLeft, colors: <Color>[Colors.black, gradientStartBot, gradientEndBot]))),),
-    body: Stack(
+      BoxDecoration( gradient: LinearGradient( begin: Alignment.topRight, end: Alignment.bottomLeft, colors: <Color>[Colors.black,Colors.black, gradientStartBot, Color.fromARGB(255, 184, 122, 255)]))),),
+      body: Stack(
       children: [
         // Background (chat messages)
-        Column(
+        Column( 
           children: [
             // Messages List
             Expanded(
               child: Container(
                 color: Colors.black,
                 child: ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 100),
                   itemCount: _messages.length,
                   itemBuilder: (context, index) {
-                    return bubble(_messages[index], _isUserMsg[index], index);
-                  },
+                      return bubble(_messages[index], _isUserMsg[index], index);
+                  }
                 ),
               ),
-            ),
+            ), 
           ],
         ),
-
-        Positioned(
+        //text box
+        Positioned( 
           bottom: 8,
           left: 8,
           right: 8,
@@ -137,7 +154,7 @@ Widget build(BuildContext context) {
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(26.0),
@@ -151,16 +168,15 @@ Widget build(BuildContext context) {
                       Expanded(
                         child: TextField(
                           controller: _controller,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             hintText: 'Type a message',
                             border: InputBorder.none, 
                           ),
                           onEditingComplete: _sendMessage,
-                          style: TextStyle(color: Colors.white),
+                          style: const TextStyle(color: Colors.white),
                         ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.send, color: const Color.fromARGB(255, 153, 0, 255)),
+                      ),IconButton(
+                        icon: const Icon(Icons.send, color: Color.fromARGB(255, 153, 0, 255)),
                         onPressed: _sendMessage,
                       ),
                     ],
