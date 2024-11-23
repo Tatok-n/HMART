@@ -1,9 +1,5 @@
 import pandas as pd
 
-def load_data(filename):
-    """Loads the dataset from a CSV file."""
-    return pd.read_csv("vehicles-cleaned.csv")
-
 def filter_cars(data, filters):
     """
     Filters the dataset based on user input criteria.
@@ -48,30 +44,42 @@ def recommend_cars(filtered_data, top_n=3):
     return "\n".join(f"{i+1}. VIN: {row['VIN']}, Price: {row['SellingPrice']}, Miles: {row['Miles']}"
                      for i, row in best_cars.iterrows())
 
-def main():
-    # Load the dataset
-    filename = "car_data.csv"  # Replace with your dataset file
-    car_data = load_data(filename)
-
-    # Filtering Input
-    car_type = input("Type (e.g., 'New', 'Used'): ").strip() or None
-    make = input("Make (e.g., 'Toyota', 'Hyundai'): ").strip() or None
-    fuel_type = input("Fuel Type (e.g., 'Gasoline Fuel', 'Hybrid Fuel'): ").strip() or None
-    price_range = input("Price range (min,max): ").strip() or None
-    if price_range:
-        price_range = tuple(map(int, price_range.split(',')))
-    mileage_range = input("Mileage range (min,max): ").strip() or None
-    if mileage_range:
-        mileage_range = tuple(map(int, mileage_range.split(',')))
-
-    # Filters dictionary
+def recommend(type, year, make, model, body, door, extColor, intColor, engineCylinder, transmission, engineBlock, engineDesc, fuel, driveTrain, mktClass, capacity, mileage):
+    
+    mileage_range = { "veryLow":(0,20000), "low":(20000,40000),"medium":(40000,60000),"high":(60000,80000),"veryHigh":(80000,100000)}
+    
     filters = {
-        "Type": car_type,
-        "Make": make,
-        "Fuel_Type": fuel_type,
-        "SellingPrice": price_range,
-        "Miles": mileage_range,
+        "type": type,
+        "year": year,
+        "make": make,
+        "model": model,
+        "body": body,
+        "door": door,
+        "extColor": extColor,
+        "intColor": intColor,
+        "engineCylinder": engineCylinder,
+        "transmission": transmission,
+        "engineBlock": engineBlock,
+        "engineDesc": engineDesc,
+        "fuel": fuel,
+        "driveTrain": driveTrain,
+        "mktClass": mktClass,
+        "capacity": capacity
+        "mileage" : mileage_range[mileage]
     }
+    # Load the dataset
+    car_data = pd.read_csv("vehicles-cleaned.csv")
+
+    # Filtering discrete input
+    for criteria, value in filters:
+        filters[criteria] = value or None
+        
+    # Filter continuous input
+    
+    
+
+
+
 
     # Filter and recommend
     filtered_cars = filter_cars(car_data, filters)

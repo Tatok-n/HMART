@@ -1,3 +1,5 @@
+import 'dart:math';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 
@@ -8,6 +10,8 @@ void main() {
 double screenWidth = 0;
 double screenHeight = 0;
 
+final player=AudioPlayer();
+
 double _size1 = 24;
 double _size2 = 20;
 double _size3 = 18;
@@ -15,10 +19,11 @@ double _size3 = 18;
 Color gradientStartBot = Color.fromARGB(255, 153, 0, 255);
 Color gradientEndBot = Color.fromARGB(255, 143, 45, 255);
 
-Color gradientStartUser = Color.fromARGB(255, 255, 255, 255);
-Color gradientEndUser = Color.fromARGB(255, 187, 187, 187);
+Color gradientStartUser = Color.fromARGB(255, 223, 189, 255);
+Color gradientEndUser = Color.fromARGB(255, 255, 255, 255);
 
 bool _reccomendInStock = false;
+bool _SHREK= false;
 
 
 class MyApp extends StatelessWidget {
@@ -29,6 +34,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     screenWidth = MediaQuery.of(context).size.width;
     screenHeight = MediaQuery.of(context).size.height;
+    
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
@@ -45,21 +51,31 @@ class ChatScreen extends StatefulWidget {
   @override
   _ChatScreenState createState() => _ChatScreenState();
 }
-
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   List<String> _messages = [];
   List<bool> _isUserMsg = [];
+   final ScrollController _scrollController = ScrollController();
 
   void _sendMessage() {
     if (_controller.text.isNotEmpty) {
       setState(() {
         _messages.add(_controller.text);
         _isUserMsg.add(true);
-        sendChat(_controller.text); //just for now :)
+        //sendChat(_controller.text); un-comment to see how chat messages look
         _controller.clear();
+          _scrollToBottom();
       });
     }
+    
+  }
+
+   void _scrollToBottom() {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: Duration(milliseconds: 300), // Smooth scrolling
+        curve: Curves.easeOut,
+      );
     
   }
 
@@ -67,16 +83,36 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _messages.add(messageContent);
       _isUserMsg.add(false);
+        _scrollToBottom();
     });
   }
+
+
+void showShrek(BuildContext context) async {
+  await showDialog(
+    context: context,
+    builder: (_) => ImagePrompt(),
+  ).then((_) {
+    _SHREK = false;
+    player.stop();
+  });
+}
+
+void playShrek() async {
+  await player.play(AssetSource("sounds/580590_All-Star-8bit-Remix.mp3"));
+}
+
+
+
+  
 
   Widget bubble(String content, bool isUserMessage,index) {
     MainAxisAlignment alignment;
     Color bubbleColor;
     Color textColor;
-    double position = index/_messages.length;
-
-
+          double position = _messages.length > 1
+      ? (index==(_messages.length-1) ? 0.0 : index / (_messages.length - 1).toDouble())
+      : .0;
     if (isUserMessage) {
       alignment = MainAxisAlignment.end;
       bubbleColor = Color.lerp(gradientStartUser, gradientEndUser, position)!;
@@ -84,11 +120,11 @@ class _ChatScreenState extends State<ChatScreen> {
 
     } else {
       alignment = MainAxisAlignment.start;
-       bubbleColor = Color.lerp(gradientStartBot, gradientStartBot, position)!;
+       bubbleColor = Color.lerp(gradientStartBot, gradientEndBot, position)!;
        textColor = const Color.fromARGB(255, 233, 213, 255);
     }
     return Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: Row(
                       mainAxisAlignment : alignment,
                       children: [Container(
@@ -132,10 +168,27 @@ Widget build(BuildContext context) {
               child: Container(
                 color: Colors.black,
                 child: ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 100),
+                  controller: _scrollController,
                   itemCount: _messages.length,
                   itemBuilder: (context, index) {
-                      return bubble(_messages[index], _isUserMsg[index], index);
+                         
+                         int length = _messages.length;
+                         if (index == length-1) {
+                          if (_messages[index] == "shrek" ) 
+                          {
+                            _SHREK = true;
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                            playShrek();
+                            showShrek(context);
+                            });
+                            }
+                             return Padding(
+                               padding: const EdgeInsets.only(bottom: 150),
+                               child: bubble(_messages[index], _isUserMsg[index], index),
+                             );
+                         } else {
+                             return bubble(_messages[index], _isUserMsg[index], length-index);
+                         }
                   }
                 ),
               ),
@@ -159,10 +212,11 @@ Widget build(BuildContext context) {
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(26.0),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.3), 
+                      color: const Color.fromARGB(255, 244, 207, 255).withOpacity(0.3), 
                       width: 1.0,
                     ),
                   ),
+                  //Text field
                   child: Row(
                     children: [
                       Expanded(
@@ -177,7 +231,9 @@ Widget build(BuildContext context) {
                         ),
                       ),IconButton(
                         icon: const Icon(Icons.send, color: Color.fromARGB(255, 153, 0, 255)),
-                        onPressed: _sendMessage,
+                        onPressed: () {
+                          _sendMessage();
+                        },
                       ),
                     ],
                   ),
@@ -190,6 +246,23 @@ Widget build(BuildContext context) {
     ),
   );
 }
+  }
 
-
+  class ImagePrompt extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Container(
+        width: 600,
+        height: 600,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(26.0),
+          image: DecorationImage(
+            image: ExactAssetImage('assets/SUPER_SECRET_ASSET.png'),
+            fit: BoxFit.cover
+          )
+        ),
+      ),
+    );
+  }
   }
