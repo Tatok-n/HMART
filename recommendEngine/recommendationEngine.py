@@ -41,10 +41,10 @@ def recommend_cars(filtered_data, top_n=3):
     
     # Sort by price (ascending) and miles (ascending)
     best_cars = filtered_data.sort_values(by=["SellingPrice", "Miles"]).head(top_n)
-    return "\n".join(f"{i+1}. VIN: {row['VIN']}, Price: {row['SellingPrice']}, Miles: {row['Miles']}"
-                     for i, row in best_cars.iterrows())
+    return "\n".join(f"{i+1}. VIN: {row['VIN']}"
+        for i, row in best_cars.iterrows())
 
-def recommend(type, year, make, model, body, door, extColor, intColor, engineCylinder, transmission, engineBlock, engineDesc, fuel, driveTrain, mktClass, capacity, mileage, mpg, price):
+def recommend(type = None, year = None, make = None, model = None, body = None, door = None, extColor = None, intColor = None, engineCylinder = None, transmission = None, engineBlock = None, engineDesc = None, fuel = None, driveTrain = None, mktClass = None, capacity = None, mileage = None, mpg = None, price = None):
     
     mileageRange = { "veryLow":(0,20000), "low":(20001,40000),"medium":(40001,60000),"high":(60001,80000),"veryHigh":(80001,)}
     
@@ -54,41 +54,51 @@ def recommend(type, year, make, model, body, door, extColor, intColor, engineCyl
     
     priceRange = { "veryLow":(0,10000), "low":(10001,25000),"medium":(25001,50000),"high":(500001,75000),"veryHigh":(1000000,)}
     
-    filters = {
-        "type": type,
-        "year": year,
-        "make": make,
-        "model": model,
-        "body": body,
-        "door": door,
-        "extColor": extColor,
-        "intColor": intColor,
-        "engineCylinder": engineCylinder,
-        "transmission": transmission,
-        "engineBlock": engineBlock,
-        "engineDesc": engineDesc,
-        "fuel": fuel,
-        "driveTrain": driveTrain,
-        "mktClass": mktClass,
-        "capacity": capacity,
-        "mileage" : mileageRange[mileage],
-        "cityMPG" : cityRange[mpg],
-        "highwayMPG" : highwayRange[mpg],
-        "price" : priceRange[price]
-    }
+    # Create filters, adding to the dictionary only if the value is not None
+    filters = {}
+    
+    if type is not None:
+        filters["type"] = type
+    if year is not None:
+        filters["year"] = year
+    if make is not None:
+        filters["make"] = make
+    if model is not None:
+        filters["model"] = model
+    if body is not None:
+        filters["body"] = body
+    if door is not None:
+        filters["door"] = door
+    if extColor is not None:
+        filters["extColor"] = extColor
+    if intColor is not None:
+        filters["intColor"] = intColor
+    if engineCylinder is not None:
+        filters["engineCylinder"] = engineCylinder
+    if transmission is not None:
+        filters["transmission"] = transmission
+    if engineBlock is not None:
+        filters["engineBlock"] = engineBlock
+    if engineDesc is not None:
+        filters["engineDesc"] = engineDesc
+    if fuel is not None:
+        filters["fuel"] = fuel
+    if driveTrain is not None:
+        filters["driveTrain"] = driveTrain
+    if mktClass is not None:
+        filters["mktClass"] = mktClass
+    if capacity is not None:
+        filters["capacity"] = capacity
+    if mileage is not None:
+        filters["mileage"] = mileageRange.get(mileage)  # Use the mileage range if it's provided
+    if mpg is not None:
+        filters["cityMPG"] = cityRange.get(mpg)  # Use the city MPG range if it's provided
+        filters["highwayMPG"] = highwayRange.get(mpg)  # Use the highway MPG range if it's provided
+    if price is not None:
+        filters["price"] = priceRange.get(price)  # Use the price range if it's provided
+
     # Load the dataset
-    car_data = pd.read_csv("vehicles-cleaned.csv")
-
-    # Filtering discrete input
-    for criteria, value in filters:
-        filters[criteria] = value or None
-        
-    # Filter continuous input
-    
-    
-
-
-
+    car_data = pd.read_csv("data/vehiclesCleaned.csv")
 
     # Filter and recommend
     filtered_cars = filter_cars(car_data, filters)
@@ -97,3 +107,4 @@ def recommend(type, year, make, model, body, door, extColor, intColor, engineCyl
 
 if __name__ == "__main__":
     recommend()
+    
