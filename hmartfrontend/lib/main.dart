@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'dart:ui';
 
@@ -15,8 +17,8 @@ double _size3 = 18;
 Color gradientStartBot = Color.fromARGB(255, 153, 0, 255);
 Color gradientEndBot = Color.fromARGB(255, 143, 45, 255);
 
-Color gradientStartUser = Color.fromARGB(255, 255, 255, 255);
-Color gradientEndUser = Color.fromARGB(255, 187, 187, 187);
+Color gradientStartUser = Color.fromARGB(255, 223, 189, 255);
+Color gradientEndUser = Color.fromARGB(255, 255, 255, 255);
 
 bool _reccomendInStock = false;
 
@@ -57,7 +59,7 @@ class _ChatScreenState extends State<ChatScreen> {
       setState(() {
         _messages.add(_controller.text);
         _isUserMsg.add(true);
-        sendChat(_controller.text); //just for now :)
+        //sendChat(_controller.text); un-comment to see how chat messages look
         _controller.clear();
           _scrollToBottom();
       });
@@ -88,9 +90,9 @@ class _ChatScreenState extends State<ChatScreen> {
     MainAxisAlignment alignment;
     Color bubbleColor;
     Color textColor;
-    double position = index/_messages.length;
-
-
+          double position = _messages.length > 1
+      ? (index==(_messages.length-1) ? 0.0 : index / (_messages.length - 1).toDouble())
+      : .0;
     if (isUserMessage) {
       alignment = MainAxisAlignment.end;
       bubbleColor = Color.lerp(gradientStartUser, gradientEndUser, position)!;
@@ -98,7 +100,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     } else {
       alignment = MainAxisAlignment.start;
-       bubbleColor = Color.lerp(gradientStartBot, gradientStartBot, position)!;
+       bubbleColor = Color.lerp(gradientStartBot, gradientEndBot, position)!;
        textColor = const Color.fromARGB(255, 233, 213, 255);
     }
     return Padding(
@@ -152,7 +154,7 @@ Widget build(BuildContext context) {
                          int length = _messages.length;
                          if (index == length-1) {
                              return Padding(
-                               padding: const EdgeInsets.only(bottom: 250),
+                               padding: const EdgeInsets.only(bottom: 150),
                                child: bubble(_messages[index], _isUserMsg[index], index),
                              );
                          } else {
@@ -181,10 +183,11 @@ Widget build(BuildContext context) {
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(26.0),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.3), 
+                      color: const Color.fromARGB(255, 244, 207, 255).withOpacity(0.3), 
                       width: 1.0,
                     ),
                   ),
+                  //Text field
                   child: Row(
                     children: [
                       Expanded(
@@ -200,9 +203,8 @@ Widget build(BuildContext context) {
                       ),IconButton(
                         icon: const Icon(Icons.send, color: Color.fromARGB(255, 153, 0, 255)),
                         onPressed: () {
-                        setState(() {
                           _sendMessage();
-                        });},
+                        },
                       ),
                     ],
                   ),
