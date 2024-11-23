@@ -110,7 +110,7 @@ Widget build(BuildContext context) {
     appBar: AppBar(
       actions : [Row(
         children: [
-          Text("Only reccoment in stock", style: TextStyle(color: Colors.white, fontSize: _size2),),
+          Text("Only reccomend in stock", style: TextStyle(color: Colors.white, fontSize: _size2),),
           Padding(padding: EdgeInsets.all(8)),
            Switch(value: _reccomendInStock,   onChanged: (value) {
                   setState(() {
