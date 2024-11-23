@@ -3,9 +3,12 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 
+import 'package:hmartfrontend/apiCaller.dart';
+
 void main() {
   runApp(const MyApp());
 }
+
 
 double screenWidth = 0;
 double screenHeight = 0;
@@ -16,15 +19,14 @@ double _size1 = 24;
 double _size2 = 20;
 double _size3 = 18;
 
-Color gradientStartBot = Color.fromARGB(255, 153, 0, 255);
+Color gradientStartBot = Color.fromARGB(255, 64, 0, 255);
 Color gradientEndBot = Color.fromARGB(255, 143, 45, 255);
 
 Color gradientStartUser = Color.fromARGB(255, 223, 189, 255);
 Color gradientEndUser = Color.fromARGB(255, 255, 255, 255);
 
-bool _reccomendInStock = false;
 bool _SHREK= false;
-
+Apicaller apicaller = Apicaller();
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -57,18 +59,20 @@ class _ChatScreenState extends State<ChatScreen> {
   List<bool> _isUserMsg = [];
    final ScrollController _scrollController = ScrollController();
 
-  void _sendMessage() {
+  void _sendMessage() async{
+    String response = await apicaller.getResponseString(_controller.text);
     if (_controller.text.isNotEmpty) {
       setState(() {
         _messages.add(_controller.text);
         _isUserMsg.add(true);
-        //sendChat(_controller.text); un-comment to see how chat messages look
+        sendChat(response);
         _controller.clear();
           _scrollToBottom();
       });
-    }
-    
+    } 
   }
+
+
 
    void _scrollToBottom() {
       _scrollController.animateTo(
@@ -100,16 +104,13 @@ void showShrek(BuildContext context) async {
 
 void playShrek() async {
   await player.play(AssetSource("sounds/580590_All-Star-8bit-Remix.mp3"));
-}
-
-
-
-  
+} 
 
   Widget bubble(String content, bool isUserMessage,index) {
     MainAxisAlignment alignment;
     Color bubbleColor;
     Color textColor;
+    
           double position = _messages.length > 1
       ? (index==(_messages.length-1) ? 0.0 : index / (_messages.length - 1).toDouble())
       : .0;
@@ -144,17 +145,6 @@ void playShrek() async {
 Widget build(BuildContext context) {
   return Scaffold(
     appBar: AppBar(
-      actions : [Row(
-        children: [
-          Text("Only reccomend in stock", style: TextStyle(color: Colors.white, fontSize: _size2),),
-          Padding(padding: EdgeInsets.all(8)),
-           Switch(value: _reccomendInStock,   onChanged: (value) {
-                  setState(() {
-                    _reccomendInStock = value;
-                  });
-                },)
-        ],
-      )]  ,
       title: const Text('Chatbot'),
       flexibleSpace: Container(decoration: 
       BoxDecoration( gradient: LinearGradient( begin: Alignment.topRight, end: Alignment.bottomLeft, colors: <Color>[Colors.black,Colors.black, gradientStartBot, Color.fromARGB(255, 184, 122, 255)]))),),
@@ -171,10 +161,8 @@ Widget build(BuildContext context) {
                   controller: _scrollController,
                   itemCount: _messages.length,
                   itemBuilder: (context, index) {
-                         
                          int length = _messages.length;
-                         if (index == length-1) {
-                          if (_messages[index] == "shrek" ) 
+                          if (index== length-2 && _messages[index] == "shrek" ) 
                           {
                             _SHREK = true;
                             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -182,8 +170,9 @@ Widget build(BuildContext context) {
                             showShrek(context);
                             });
                             }
+                         if (index == length-1) {
                              return Padding(
-                               padding: const EdgeInsets.only(bottom: 150),
+                               padding: const EdgeInsets.only(bottom: 200),
                                child: bubble(_messages[index], _isUserMsg[index], index),
                              );
                          } else {
