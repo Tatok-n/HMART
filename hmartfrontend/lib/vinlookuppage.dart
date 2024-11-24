@@ -41,21 +41,35 @@ class _VINLookupPageState extends State<VINLookupPage> {
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           fetchedProducts.add(
-            Product(
-              name: '${data['Make'] ?? 'Unknown'} ${data['Model'] ?? ''}',
-              imageUrl: 'https://via.placeholder.com/150',
-              features: {
-                'Year': data['Year']?.toString() ?? 'N/A',
-                'Body': data['Body']?.toString() ?? 'N/A',
-                'Passenger Capacity': data['PassengerCapacity']?.toString() ?? 'N/A',
-                'Fuel Type': data['Fuel_Type']?.toString() ?? 'N/A',
-                'Drivetrain': data['Drivetrain']?.toString() ?? 'N/A',
-                'Transmission': data['Transmission_Description']?.toString() ?? 'N/A',
-              },
-              price: data['SellingPrice']?.toDouble() ?? 0.0,
-              matchPercentage: matchPercentage, // Store the match percentage
-            ),
-          );
+        Product(
+          name: '${data['Make'] ?? 'Unknown'} ${data['Model'] ?? ''}',
+          imageUrl: 'https://via.placeholder.com/150',
+          features: {
+            'Type': data['Type'] ?? 'N/A',
+            'Stock': data['Stock'] ?? 'N/A',
+            'VIN': data['VIN'] ?? 'N/A',
+            'Year': data['Year']?.toString() ?? 'N/A',
+            'Body': data['Body'] ?? 'N/A',
+            'Doors': data['Doors']?.toString() ?? 'N/A',
+            'Exterior Color': data['ExteriorColor'] ?? 'N/A',
+            'Interior Color': data['InteriorColor'] ?? 'N/A',
+            'Engine Cylinders': data['EngineCylinders']?.toString() ?? 'N/A',
+            'Engine Displacement': data['EngineDisplacement']?.toString() ?? 'N/A',
+            'Transmission': data['Transmission'] ?? 'N/A',
+            'Miles': data['Miles']?.toString() ?? 'N/A',
+            'Selling Price': data['SellingPrice']?.toString() ?? 'N/A',
+            'MSRP': data['MSRP']?.toString() ?? 'N/A',
+            'Drivetrain': data['Drivetrain'] ?? 'N/A',
+            'Fuel Type': data['Fuel_Type'] ?? 'N/A',
+            'City MPG': data['CityMPG']?.toString() ?? 'N/A',
+            'Highway MPG': data['HighwayMPG']?.toString() ?? 'N/A',
+            'Passenger Capacity': data['PassengerCapacity']?.toString() ?? 'N/A',
+          },
+          price: data['SellingPrice']?.toDouble() ?? 0.0,
+          matchPercentage: recommendation['matchPercentage']?.toDouble() ?? 0.0,
+        ),
+      );
+
         } else {
           print('Error fetching data for VIN $vin: ${response.statusCode}');
         }
@@ -89,7 +103,7 @@ class _VINLookupPageState extends State<VINLookupPage> {
 
     if (products.isEmpty) {
       return const Scaffold(
-        body: Center(child: Text('No products found.')),
+        body: Center(child: Text('Cannot calculate a good recommendation at the moment. Please return to collect more info. ')),
       );
     }
 

@@ -3,8 +3,8 @@ import 'dart:ui';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/apiCaller.dart';
 import 'vinlookuppage.dart'; // Import the VINLookupPage
-import 'package:hmartfrontend/apiCaller.dart'; // Import Apicaller
 
 double screenWidth = 0;
 double screenHeight = 0;
@@ -22,10 +22,9 @@ Color gradientStartUser = Color.fromARGB(255, 223, 189, 255);
 Color gradientEndUser = Color.fromARGB(255, 255, 255, 255);
 
 bool _SHREK = false;
-Apicaller apicaller = Apicaller();
+ApiCaller apicaller = ApiCaller();
 int questionCounter = 0;
 bool quizReccomendation = false;
-bool gotReccomendation = false;
 
 void main() {
   runApp(MyApp());
@@ -40,6 +39,7 @@ class MyApp extends StatelessWidget {
     screenHeight = MediaQuery.of(context).size.height;
 
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
       fontFamily: 'Roboto', // Apply the custom font globally
@@ -113,15 +113,11 @@ class _ChatScreenState extends State<ChatScreen> {
           displayMsg = "There is a couple more information that I need before we can find you the right car. I will ask you some more questions to help filter the options ";
         } else {
           quizReccomendation = true;
-          //displayMsg = await apicaller.acceptRest("", "/firstQuestion/");
-          displayMsg = "There is a couple more information that I need before we can find you the right car. I will ask you some more questions to help filter the options ";
+          displayMsg = await apicaller.acceptRest("", "/firstQuestion/");
         }
         questionCounter++;
     } else { //otherwise accept user input and process
       displayMsg = await apicaller.acceptRest(messageContent, "/replies/");
-      if (displayMsg == "Please wait while I find the best car for you") {
-        gotReccomendation = true;
-      }
     }
 
     _sendMessage(false, displayMsg);
@@ -250,13 +246,12 @@ class _ChatScreenState extends State<ChatScreen> {
             height: 50, // Set desired height
             child: ElevatedButton(
               onPressed: () {
-                if (gotReccomendation)
-                {Navigator.pushNamed(context, '/vin-lookup');}
+                Navigator.pushNamed(context, '/vin-lookup');
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: gotReccomendation ?Colors.deepPurple :const Color.fromARGB(255, 33, 33, 33)  , // Button background color
+                backgroundColor: Colors.deepPurple, // Button background color
                 foregroundColor: Colors.white, // Button text color
-                textStyle: TextStyle(
+                textStyle: const TextStyle(
                   fontFamily: 'Roboto', // Apply custom font
                   fontSize: 18, // Font size
                   fontWeight: FontWeight.bold, // Optional: Make the text bold
@@ -340,7 +335,7 @@ class ImagePrompt extends StatelessWidget {
         height: 600,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(26.0),
-          image: DecorationImage(
+          image: const DecorationImage(
             image: ExactAssetImage('assets/SUPER_SECRET_ASSET.png'),
             fit: BoxFit.cover,
           ),
