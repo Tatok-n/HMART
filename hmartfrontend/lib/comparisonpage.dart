@@ -72,138 +72,162 @@ class _ProductComparisonPageState extends State<ProductComparisonPage>
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
-      body: AnimatedBuilder(
-        animation: _backgroundAnimation,
-        builder: (context, child) {
-          return Container(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [_backgroundAnimation.value!, Colors.black],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: child,
-          );
-        },
-        child: Column(
-          children: [
-            // Scrollable Product Pages
-            Expanded(
-              child: PageView.builder(
-                itemCount: groupedProducts.length,
-                physics: allowSlide
-                    ? const BouncingScrollPhysics()
-                    : const NeverScrollableScrollPhysics(),
-                onPageChanged: (index) {
-                  setState(() {
-                    currentPageIndex = index; // Update the current page index
-                    selectedProductIndex = null; // Reset selection when page changes
-                  });
-                },
-                itemBuilder: (context, pageIndex) {
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: groupedProducts[pageIndex].asMap().entries.map((entry) {
-                      int productIndex = entry.key + pageIndex * 3;
-                      return _buildProductCard(entry.value, productIndex);
-                    }).toList(),
-                  );
-                },
-              ),
-            ),
-            // Unified Column Highlight
-            Expanded(
-              child: SingleChildScrollView(
-                child: Row(
-                  children: [
-                    // Feature Names Column
-                    Expanded(
-                      flex: 1,
-                      child: Column(
-                        children: _getAllFeatures(visibleProducts).map((feature) {
-                          return Container(
-                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-                            decoration: BoxDecoration(
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: Colors.white.withOpacity(0.2),
-                                  width: 1,
-                                ),
-                              ),
-                            ),
-                            child: Text(
-                              feature,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          );
+      body: Stack(
+        children: [
+          AnimatedBuilder(
+            animation: _backgroundAnimation,
+            builder: (context, child) {
+              return Container(
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [_backgroundAnimation.value!, Colors.black],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: child,
+              );
+            },
+            child: Column(
+              children: [
+                // Scrollable Product Pages
+                Expanded(
+                  child: PageView.builder(
+                    itemCount: groupedProducts.length,
+                    physics: allowSlide
+                        ? const BouncingScrollPhysics()
+                        : const NeverScrollableScrollPhysics(),
+                    onPageChanged: (index) {
+                      setState(() {
+                        currentPageIndex = index; // Update the current page index
+                        selectedProductIndex = null; // Reset selection when page changes
+                      });
+                    },
+                    itemBuilder: (context, pageIndex) {
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: groupedProducts[pageIndex].asMap().entries.map((entry) {
+                          int productIndex = entry.key + pageIndex * 3;
+                          return _buildProductCard(entry.value, productIndex);
                         }).toList(),
-                      ),
-                    ),
-                    // Product Columns
-                    ...visibleProducts.asMap().entries.map((entry) {
-                      int productIndex = entry.key + currentPageIndex * 3;
-                      bool isSelected = selectedProductIndex == productIndex;
-
-                      return Expanded(
-                        flex: 1,
-                        child: Container(
-                          decoration: isSelected
-                              ? BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.blueAccent,
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
-                                  color: Colors.blue.withOpacity(0.1), // Highlighted background
-                                )
-                              : null,
+                      );
+                    },
+                  ),
+                ),
+                // Unified Column Highlight
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Row(
+                      children: [
+                        // Feature Names Column
+                        Expanded(
+                          flex: 1,
                           child: Column(
                             children: _getAllFeatures(visibleProducts).map((feature) {
                               return Container(
                                 padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-                                child: Text(
-                                  entry.value.features[feature] ?? '-',
-                                  style: TextStyle(
-                                    color: isSelected ? Colors.blue : Colors.white70,
-                                    fontSize: 14,
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: Colors.white.withOpacity(0.2),
+                                      width: 1,
+                                    ),
                                   ),
-                                  textAlign: TextAlign.center,
+                                ),
+                                child: Text(
+                                  feature,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               );
                             }).toList(),
                           ),
                         ),
-                      );
-                    }).toList(),
-                  ],
+                        // Product Columns
+                        ...visibleProducts.asMap().entries.map((entry) {
+                          int productIndex = entry.key + currentPageIndex * 3;
+                          bool isSelected = selectedProductIndex == productIndex;
+
+                          return Expanded(
+                            flex: 1,
+                            child: Container(
+                              decoration: isSelected
+                                  ? BoxDecoration(
+                                      border: Border.all(
+                                        color: Colors.blueAccent,
+                                        width: 2,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: Colors.blue.withOpacity(0.1), // Highlighted background
+                                    )
+                                  : null,
+                              child: Column(
+                                children: _getAllFeatures(visibleProducts).map((feature) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                                    child: Text(
+                                      entry.value.features[feature] ?? '-',
+                                      style: TextStyle(
+                                        color: isSelected ? Colors.blue : Colors.white70,
+                                        fontSize: 14,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+                // View More Button
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        allowSlide = true; // Enable sliding and show the arrow
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.purpleAccent,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    child: const Text('View More'),
+                  ),
+                ),
+              ],
             ),
-            // View More Button
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    allowSlide = true;
-                  });
+          ),
+          // Add the arrow
+          if (allowSlide)
+            Positioned(
+              right: 16,
+              top: MediaQuery.of(context).size.height * 0.5 - 24, // Center the arrow vertically
+              child: GestureDetector(
+                onTap: () {
+                  if (currentPageIndex < groupedProducts.length - 1) {
+                    setState(() {
+                      currentPageIndex++; // Move to the next page
+                    });
+                  }
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purpleAccent,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                child: Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white,
+                  size: 30,
                 ),
-                child: const Text('View More'),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
