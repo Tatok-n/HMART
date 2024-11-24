@@ -43,8 +43,9 @@ currentResponse = ""
 chosenPath = 0
 
 
-def printToReturn(string):
-    return (string)
+def returnFinalExtractedData():
+    global finalDataCollected
+    return finalDataCollected
 
 
 
@@ -67,7 +68,8 @@ def firstPrompt(reply):
         "'Do you want to use our car recommendation software or would you like to tell me what type of car you are looking for?"
         " I want you to return an integer, return 0 if the user wants to use the recommendation software"
         "and return 1 if the user does not want to use the recommendation software."
-        "Do not povide any additional explanation, text, or characters only return the integer.")
+        "Do not povide any additional explanation, text, or characters only return the integer."
+        "Do not give a sentemce, give a single digit response.")
     choice = ask_gpt(choice_of_model)
     chosenPath = int(choice)
     try:
@@ -119,24 +121,25 @@ def postReply(reply) :
         else :
             DataCollected[probed_specs[questionCounter]] = user_reply
             questionCounter += 1
-            if questionCounter < (len(questions[probed_specs[questionCounter]]) -1):
+            if questionCounter < (len(probed_specs) -1):
                 conversation.append({"role": "assistant", "content": questions[probed_specs[questionCounter]]})
                 return generateQuirkyQuestion()
             else:
                 summarizeAnswers()
                 return "Please wait while I find the best car for you"
     else : #returns finalExtractedList
-        user_spec = currentResponse
+        user_spec = user_reply
         extractedList = []
         
         # this block will determine the specs that were not extracted from the user's prompt and get you a list of specs that were not scraped from user prommpt
         for i in range(0, len(probed_specs)):
             what_to_do = (
                 f"The input from the user '{user_spec}' is their desired car description. I want you to look at the input and determine if the input has any information about '{probed_specs[i]}'"
-                "If yes, then generate a one work answer that will cover the user's wants for that specific spec. If no information in the input is given for '{probed_specs[i]}', then set that element as None."
+                f"If yes, then generate a one work answer that will cover the user's wants for that specific spec. If no information in the input is given for '{probed_specs[i]}', then set that element as None."
                 "You must return a single word for every element. No comments are allowed.")
             extracted_info = ask_gpt(what_to_do)
             extractedList.append(extracted_info)
+        print(extractedList)
 
         for index in range(0, len(extractedList)):
             summarize_answers = (f" I have a user input '{extractedList[index]}', to the spec of a car '{probed_specs[index]}' I gave them freedom to write in any format they want"
@@ -266,7 +269,7 @@ def ask_user_with_gpt(question):
             print(chatbot_reply_off_topic)  # ui display
 
             # ask the original question again
-            return ask_user_with_gpt(question, conversation)
+            return ask_user_with_gpt(question)
 
         # If the response is relevant, return it and add to history
         conversation.append({"role": "user", "content": user_reply})
@@ -303,7 +306,7 @@ def summarizeAnswers():
 
     for index, key in enumerate(DataCollected):
         summarize_answers = (f" I have a user input '{DataCollected[key]}', to the spec of a car '{probed_specs[index]}' I gave them freedom to write in any format they want"
-                            "Now you need to make the DataCollected[key] a one word answer. If you determine that the user input does not care for that option, make the answer None."
+                            "Now you need to make the user input a one word answer. If you determine that the user input does not care for that option, make the answer None."
                             " Your response must only contain one-word, without any additional text, characters, explanation, or comments. You must return that response as a string.  Examples are below:"
                             f"So: 'Are you looking for a new or used car?' the answer should be either new, used, or None"
                             f"'What year does the car need to be at minimum?' the answer should be a year or None"
