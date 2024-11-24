@@ -52,7 +52,7 @@ class MyApp extends StatelessWidget {
     ),
       home: ChatScreen(),
       routes: {
-        '/vin-lookup': (context) => VINLookupPage(apiUrl: 'http://127.0.0.1:5000/vehicle'),
+        '/vin-lookup': (context) => VINLookupPage(apiUrl: 'http://127.0.0.1:5000'),
       },
     );
   }
