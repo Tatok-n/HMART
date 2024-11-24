@@ -247,12 +247,8 @@ def ask_gpt(string):
 
 def load_rules_from_csv(questions):
     
-    csv_file_list = ['years.csv','makes.csv','models.csv','bodies.csv','doors.csv','extColors.csv','intColors.csv','engineCylinders.csv','engineDescs.csv','transmissions.csv','engineBlocks.csv','driveTrain.csv','mktClasses.csv','capacity.csv','mileage.csv','fuels.csv','']
-    rules = {}
-
-    if len(questions) != len(csv_file_list):
-        raise ValueError("The number of questions does not match the number of CSV files.")
-    
+    csv_file_list = ['years.csv','makes.csv','models.csv','bodies.csv','doors.csv','extColors.csv','intColors.csv','engineCylinders.csv','engineDescs.csv','transmissions.csv','engineBlocks.csv','driveTrain.csv','mktClasses.csv','capacity.csv','mileage.csv','fuels.csv']
+    global rules
   
     for i, question in enumerate(questions):
         file_path = csv_file_list[i]
@@ -401,7 +397,7 @@ def get_vehicle():
 
 @app.route('/recommend', methods=['GET'])
 def recommend_api():
-    test_features = ['Used', None, 'Toyota', 'Yaris', None, None, None, None, None, None, None, None, None, None, None, None, None, None, '10000']
+    test_features = returnFinalExtractedData()  #['Used', None, 'Toyota', 'Yaris', None, None, None, None, None, None, None, None, None, None, None, None, None, None, '10000']
     recommendations = recommend(test_features)
     response = [{"VIN": vin, "matchPercentage": match_percentage} for vin, match_percentage in recommendations.items()]
     return jsonify(response)
