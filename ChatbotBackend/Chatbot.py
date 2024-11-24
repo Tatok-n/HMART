@@ -2,8 +2,13 @@ import openai
 
 from flask import Flask, request
 
+conversation = [{"role": "system", "content": "You are a helpful car salesman chatbot. If the user responds off-topic, acknowledge their comment politely and guide them back to answering the question at hand."}]
+
+
+
 
 questions = {
+    "type" : "Would you want a new or old car",
     "year": "What year should the car be?",
     "make": "Do you have a specific make of car in mind?",
     "model": "Are you looking for a specific model of that make?",
@@ -29,46 +34,124 @@ probed_specs = [
     "driveTrain", "mktClass", "capacity", "mileage", "mpg", "price"
 ]
 
-'''app = Flask(__name__)
+questionCounter = 0
+app = Flask(__name__)
 currentResponse = ""
 chosenPath = 0
-'''
+
 
 def printToReturn(string):
     return (string)
 
 
+
+def recommendationController(userReply) :
+    global questionCounter
+    global questions
+    global currentResponse
+    currentResponse = userReply
+    return ask_user_with_gpt(questions[questionCounter])
+
+
+
 currentResponse = ""
-#@app.route("/firstReply/", methods=["POST"])
-def firstPrompt():
-    #response = request.view_args['reply']
+@app.route("/firstReply/<reply>", methods=["POST"])
+def firstPrompt(reply):
+    response = request.view_args['reply']
     choice_of_model = (
-        f"From the user's input 'I want the reccomendation software' I want you to determine what there answer to the question: "
+        f"From the user's input {response} I want you to determine what there answer to the question: "
         "'Do you want to use our car recommendation software or would you like to tell me what type of car you are looking for?"
         " I want you to return an integer, return 0 if the user wants to use the recommendation software"
         "and return 1 if the user does not want to use the recommendation software."
         "Do not povide any additional explanation, text, or characters only return the integer.")
     choice = ask_gpt(choice_of_model)
     try:
-        choice = int(choice)  # Convert the string response to an integer
+          # Convert the string response to an integer
         return choice  # Return the integer value
     except ValueError:
         print(f"Unexpected response from GPT: {choice}")
         return -1
-    
-def ask_user_with_gpt(question, conversation):
+
+def generateQuirkyQuestion() :
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=conversation,
+        max_tokens=100,
+        temperature=0.7  # allows for creative answers
+    )
+    return response["choices"][0]["message"]["content"].strip()
+
+
+
+@app.route("/firstQuestion/", methods=["GET"])
+def firstQuestion() :
+    global conversation
+    global questions
+    global probed_specs
+    conversation.append({"role": "assistant", "content": questions[probed_specs[0]]})
+    return generateQuirkyQuestion()
+
+@app.route("/replies/<reply>", methods=["POST"])
+def postReply(reply) :
+    global conversation
+    global questions
+    global probed_specs
+    global questionCounter
+    user_reply = request.view_args['reply']
+    conversation.append({"role": "user", "content": user_reply})
+    question = questions[probed_specs[questionCounter]]
+
+    relevance = checkRelevance(user_reply, question)
+    if relevance == "no" :
+        return steerTowardsResponse(user_reply, question)
+    else :
+        questionCounter += 1
+        conversation.append({"role": "assistant", "content": questions[probed_specs[questionCounter]]})
+        return generateQuirkyQuestion()
+
+
+
+
+
+
+def steerTowardsResponse(user_reply, question) :
+    off_topic_response_prompt = (
+        f"The user gave an off-topic answer: '{user_reply}'. "
+        "Politely acknowledge their comment, provide a helpful or relevant reply, "
+        f"and then steer the conversation back to the original question: '{question}'."
+    )
+    off_topic_response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=conversation + [{"role": "assistant", "content": off_topic_response_prompt}],
+        max_tokens=100,
+        temperature=0.7
+    )
+    chatbot_reply_off_topic = off_topic_response["choices"][0]["message"]["content"].strip()
+    conversation.append({"role": "assistant", "content": chatbot_reply_off_topic})
+    return chatbot_reply_off_topic
+
+
+def checkRelevance(user_reply, question) :
+    relevance_check_prompt = (
+        f"The user answered: '{user_reply}' to the question: '{question}'. "
+        "Is the response relevant to the question? Reply with 'yes' or 'no' only."
+    )
+    relevance_check_response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=conversation + [{"role": "assistant", "content": relevance_check_prompt}],
+        max_tokens=10,
+        temperature=0
+    )
+    return relevance_check_response["choices"][0]["message"]["content"].strip().lower()
+
+
+
+def ask_user_with_gpt(question):
     # Use OpenAI API to ask the user a question, handle off-topic responses, and circle back to the original question.
+    global conversation
     conversation.append({"role": "assistant", "content": question})
     try:
-        # Generate a response to the question
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=conversation,
-            max_tokens=100,
-            temperature=0.7  # allows for creative answers
-        )
-
-        printToReturn(response["choices"][0]["message"]["content"].strip())
+        response = generateQuirkyQuestion()
 
         user_reply = currentResponse  # chat gpt response is the string at the ask and user_reply is user input
         conversation.append({"role": "user", "content": user_reply})
@@ -135,7 +218,8 @@ def ask_gpt(string):
         print(f"Error: {e}")
         return f"Error: {e}"
 
-def recommendedAlgo(conversation):
+def recommendedAlgo():
+    global conversation
     required_specs = list(questions.keys())  # this will make the keys into a list to input to is_full function
     user_answers = {}
     while not is_full(user_answers, required_specs):
@@ -181,7 +265,7 @@ def is_full(dictionary, required_specs):
     return all(key in dictionary and dictionary[key] not in [None, ""] for key in required_specs)
 
 
-def tellUsCar(questions, probed_specs, conversation): 
+def tellUsCar(questions, probed_specs, conversation):
     user_spec = currentResponse
     what_to_do = (
     f"The input from the user '{user_spec}' is a car description. I want you to look at the input '{user_spec}' from the user and make an ordered list:"
@@ -202,9 +286,6 @@ def tellUsCar(questions, probed_specs, conversation):
     for i in unfound_specs_index:
         unfound_specs.append(probed_specs[i])  # Use append to add elements from probed_specs
 
-
-    printToReturn("There is a couple more information that I need before we can find you the right car. I will ask you some more questions to help filter the options ")
-    
     for spec in unfound_specs:
         if (spec in questions):
             question = questions[spec]
@@ -230,15 +311,14 @@ def tellUsCar(questions, probed_specs, conversation):
             spec_index = probed_specs.index(spec)
             final_extraction_info[spec_index] = final_form_Uinput
             return question
-        
-modelChoice = firstPrompt() # determines the type of model the Chatbot should do
 
-if modelChoice == 1:
-    conversation = [{"role": "system", "content": "You are a helpful car salesman chatbot. If the user responds off-topic, acknowledge their comment politely and guide them back to answering the question at hand."}]
-    tellUsCar(questions, probed_specs,conversation)
-else:
-    conversation = [{"role": "system", "content": "You are a helpful car salesman chatbot. If the user responds off-topic, acknowledge their comment politely and guide them back to answering the question at hand."}]
-    recommendedAlgo(conversation)
+# modelChoice = firstPrompt() # determines the type of model the Chatbot should do
+
+# if modelChoice == 1:
+     #     tellUsCar(questions, probed_specs,conversation)
+# else:
+#     conversation = [{"role": "system", "content": "You are a helpful car salesman chatbot. If the user responds off-topic, acknowledge their comment politely and guide them back to answering the question at hand."}]
+#     recommendedAlgo()
 
 
 
