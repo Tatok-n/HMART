@@ -23,6 +23,8 @@ Color gradientEndUser = Color.fromARGB(255, 255, 255, 255);
 
 bool _SHREK = false;
 Apicaller apicaller = Apicaller();
+int questionCounter = 0;
+bool quizReccomendation = false;
 
 void main() {
   runApp(MyApp());
@@ -60,7 +62,13 @@ class _ChatScreenState extends State<ChatScreen> {
   List<String> _messages = [];
   List<bool> _isUserMsg = [];
   final ScrollController _scrollController = ScrollController();
-  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
+
+     @override
+   void initState() {
+     _greet("Do you want to use our car recommendation software or would you like to tell me what type of car you are looking for?");
+     super.initState();
+     //firstResponse();
+   }
 
   void _sendMessage(bool isUserMsg, String message) async {
     if (_controller.text.isNotEmpty || !isUserMsg) {
@@ -73,6 +81,13 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  void _greet(String message) async {
+    setState(() {
+      _messages.add(message);
+      _isUserMsg.add(false);
+    });
+  }
+
   void _scrollToBottom() {
     _scrollController.animateTo(
       _scrollController.position.maxScrollExtent,
@@ -82,8 +97,28 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void processResponse(String messageContent) async {
-    String response = await apicaller.getResponseString(messageContent);
-    _sendMessage(false, response);
+    String response = "";
+    String displayMsg = "";
+    if (questionCounter == 0) { //if no questions have been asked before, then greet the user with the fisrt question
+        response = await apicaller.acceptRest(messageContent, "/firstReply/");
+        if (response == "1") {
+          quizReccomendation = false;
+          displayMsg = "There is a couple more information that I need before we can find you the right car. I will ask you some more questions to help filter the options ";
+        } else {
+          quizReccomendation = true;
+          displayMsg = await apicaller.acceptRest("", "/firstQuestion/");
+        }
+        questionCounter++;
+    } else { //otherwise accept user input and process
+      displayMsg = await apicaller.acceptRest(messageContent, "/replies/");
+    }
+    
+    _sendMessage(false, displayMsg);
+  }
+
+  void firstResponse() async {
+    String response = await apicaller.acceptRest("", "http://localhost:5000/prompts/first");
+    _greet(response);
   }
 
   void showShrek(BuildContext context) async {
@@ -220,7 +255,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               _sendMessage(true, _controller.text);
                               processResponse(prompt);
                             },
-                            style: const TextStyle(color: Colors.white),
+                            style: const TextStyle(color: Color.fromARGB(255, 163, 110, 255)),
                           ),
                         ),
                         IconButton(

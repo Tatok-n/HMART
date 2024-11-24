@@ -58,6 +58,7 @@ def recommendationController(userReply) :
 currentResponse = ""
 @app.route("/firstReply/<reply>", methods=["POST"])
 def firstPrompt(reply):
+    global chosenPath
     response = request.view_args['reply']
     choice_of_model = (
         f"From the user's input {response} I want you to determine what there answer to the question: "
@@ -66,6 +67,7 @@ def firstPrompt(reply):
         "and return 1 if the user does not want to use the recommendation software."
         "Do not povide any additional explanation, text, or characters only return the integer.")
     choice = ask_gpt(choice_of_model)
+    chosenPath = int(choice)
     try:
           # Convert the string response to an integer
         return choice  # Return the integer value
@@ -99,22 +101,28 @@ def postReply(reply) :
     global probed_specs
     global questionCounter
     global DataCollected
+    global chosenPath
+
     user_reply = request.view_args['reply']
     conversation.append({"role": "user", "content": user_reply})
-    question = questions[probed_specs[questionCounter]]
 
-    relevance = checkRelevance(user_reply, question)
-    if relevance == "no" :
-        return steerTowardsResponse(user_reply, question)
+    if (chosenPath == 0) :
+        question = questions[probed_specs[questionCounter]]
+        relevance = checkRelevance(user_reply, question)
+        if relevance == "no" :
+            return steerTowardsResponse(user_reply, question)
+        else :
+            DataCollected[probed_specs[questionCounter]] = user_reply
+            questionCounter += 1
+            if questionCounter < (len(questions[probed_specs[questionCounter]]) -1):
+                conversation.append({"role": "assistant", "content": questions[probed_specs[questionCounter]]})
+                return generateQuirkyQuestion()
+            else:
+                summarizeAnswers()
+                return "Please wait while I find the best car for you"
     else :
-        DataCollected[probed_specs[questionCounter]] = user_reply
-        questionCounter += 1
-        if questionCounter < (len(questions[probed_specs[questionCounter]]) -1):
-            conversation.append({"role": "assistant", "content": questions[probed_specs[questionCounter]]})
-            return generateQuirkyQuestion()
-        else:
-            summarizeAnswers()
-            return "Please wait while I find the best car for you"
+        return "a"
+
 
 
 def steerTowardsResponse(user_reply, question) :
@@ -261,42 +269,43 @@ def summarizeAnswers():
 
 
 
-def recommendedAlgo():
-    global conversation
-    global probed_specs
 
-    required_specs = list(questions.keys())  # this will make the keys into a list to input to is_full function
-    user_answers = {}
-    while not is_full(user_answers, required_specs):
-        for key, question in questions.items():
-            # Skip if already answered
-            if key in user_answers and user_answers[key] not in [None, ""]:  # [None,""] notation is used to check if the dictionary has a NULL spot
-                continue
-
-        for question in questions:
-            user_input_f = ask_user_with_gpt(question, conversation)
-            user_answers[question] = user_input_f
-
-
-    summarize_answers = (f" I have a dictionary of user input '{user_answers[question]}', to the question '{probed_specs[index]}' I gave them freedom to write in any format they want"
-                                       "Now you need to make the user_answers[question] a one word answer. If you determine that the user input does not care for that option, make the answer None."
-                                       " Your response must only contain the one-word or single-number answer, without any additional text, explanation, or comments.  Examples are below:"
-                                       "So: 'Are you looking for a new or used car?' the answer should be either new, used, or None"
-                                       "'What year does the car need to be at minimum?' the answer should be a year or None"
-                                       "'Do you have a favorite car brand or a specific manufacturer in mind?' the answer should be a car brand name, or None"
-                                       "'Would you prefer a sleek, sporty design or something more spacious like an SUV or sedan?' the answer should be SUV, Sedan, Coupe, or None"
-                                       "'Do you prefer a car with easy access, like a four-door sedan, or would a two-door coupe be more your style?' the answer should be 4,2, or None "
-                                       "'Is there a specific color that catches your eye when you're looking for a car?' the answer should return a color or None"
-                                       "'When sitting inside a car, do you like a lighter, airy feel or something darker and more elegant?' the answer should be light interior, dark interior or None"
-                                       "'Do you prefer a car that shifts gears manually, or are you more comfortable with automatic transmission?' the answer should be automatic, manual or None"
-                                       "'What is the maximum mileage the car can have?' the answer should be either 'veryLow','low','medium','high','veryHigh, or None. Respect theses ranges 'veryLow'=(0,20000), 'low'=(20001,40000),'medium'=(40001,60000),'high'=(60001,80000),'veryHigh'=(80001,). If the user seems to not care how much mileage the car should have, then return as None."
-                                       "'What kind of budget are you thinking about for your car? Do you have a price range in mind?' the answer should be either 'veryLow','low','medium','high','veryHigh. Respect theses ranges: 'veryLow'=(0,10000), 'low'=(10001,25000),'medium'=(25001,50000),'high'=(500001,75000),'veryHigh'=(1000000,). If the user seems to not care how much the car will cost, then return as None."
-                                       "'Are you leaning toward an eco-friendly car (electric or hybrid) or prefer a traditional petrol/diesel vehicle?' the answer should be electric, hybrid, fuel, diesel, or None "
-                                       "'How many people do you usually travel with? Do you need a car that fits the family or a smaller one for personal trips?' the answer should give a number or None")
-
-    final_extraction_info = ask_gpt(summarize_answers)
-    print(final_extraction_info)
-    print("Please wait while I search for the dealership's recommendations.")
+# def recommendedAlgo():
+#     global conversation
+#     global probed_specs
+#
+#     required_specs = list(questions.keys())  # this will make the keys into a list to input to is_full function
+#     user_answers = {}
+#     while not is_full(user_answers, required_specs):
+#         for key, question in questions.items():
+#             # Skip if already answered
+#             if key in user_answers and user_answers[key] not in [None, ""]:  # [None,""] notation is used to check if the dictionary has a NULL spot
+#                 continue
+#
+#         for question in questions:
+#             user_input_f = ask_user_with_gpt(question, conversation)
+#             user_answers[question] = user_input_f
+#
+#
+#     summarize_answers = (f" I have a dictionary of user input '{user_answers[question]}', to the question '{probed_specs[index]}' I gave them freedom to write in any format they want"
+#                                        "Now you need to make the user_answers[question] a one word answer. If you determine that the user input does not care for that option, make the answer None."
+#                                        " Your response must only contain the one-word or single-number answer, without any additional text, explanation, or comments.  Examples are below:"
+#                                        "So: 'Are you looking for a new or used car?' the answer should be either new, used, or None"
+#                                        "'What year does the car need to be at minimum?' the answer should be a year or None"
+#                                        "'Do you have a favorite car brand or a specific manufacturer in mind?' the answer should be a car brand name, or None"
+#                                        "'Would you prefer a sleek, sporty design or something more spacious like an SUV or sedan?' the answer should be SUV, Sedan, Coupe, or None"
+#                                        "'Do you prefer a car with easy access, like a four-door sedan, or would a two-door coupe be more your style?' the answer should be 4,2, or None "
+#                                        "'Is there a specific color that catches your eye when you're looking for a car?' the answer should return a color or None"
+#                                        "'When sitting inside a car, do you like a lighter, airy feel or something darker and more elegant?' the answer should be light interior, dark interior or None"
+#                                        "'Do you prefer a car that shifts gears manually, or are you more comfortable with automatic transmission?' the answer should be automatic, manual or None"
+#                                        "'What is the maximum mileage the car can have?' the answer should be either 'veryLow','low','medium','high','veryHigh, or None. Respect theses ranges 'veryLow'=(0,20000), 'low'=(20001,40000),'medium'=(40001,60000),'high'=(60001,80000),'veryHigh'=(80001,). If the user seems to not care how much mileage the car should have, then return as None."
+#                                        "'What kind of budget are you thinking about for your car? Do you have a price range in mind?' the answer should be either 'veryLow','low','medium','high','veryHigh. Respect theses ranges: 'veryLow'=(0,10000), 'low'=(10001,25000),'medium'=(25001,50000),'high'=(500001,75000),'veryHigh'=(1000000,). If the user seems to not care how much the car will cost, then return as None."
+#                                        "'Are you leaning toward an eco-friendly car (electric or hybrid) or prefer a traditional petrol/diesel vehicle?' the answer should be electric, hybrid, fuel, diesel, or None "
+#                                        "'How many people do you usually travel with? Do you need a car that fits the family or a smaller one for personal trips?' the answer should give a number or None")
+#
+#     final_extraction_info = ask_gpt(summarize_answers)
+#     print(final_extraction_info)
+#     print("Please wait while I search for the dealership's recommendations.")
 
 def first_prompt():
     return (
@@ -333,7 +342,7 @@ def tellUsCar(questions, probed_specs, conversation):
         if (spec in questions):
             question = questions[spec]
             conversation.append({"role": "assistant", "content": question})
-            user_input = ask_user_with_gpt(question, conversation)
+            user_input = ask_user_with_gpt(question)
             conversation.append({"role": "user", "content": user_input})
             summarize_answers = (
                 f" I have a user input '{user_input}', to the question '{question}' I gave them freedom to write in any format they want"
