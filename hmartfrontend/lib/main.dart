@@ -25,6 +25,7 @@ bool _SHREK = false;
 Apicaller apicaller = Apicaller();
 int questionCounter = 0;
 bool quizReccomendation = false;
+bool gotReccomendation = false;
 
 void main() {
   runApp(MyApp());
@@ -112,11 +113,15 @@ class _ChatScreenState extends State<ChatScreen> {
           displayMsg = "There is a couple more information that I need before we can find you the right car. I will ask you some more questions to help filter the options ";
         } else {
           quizReccomendation = true;
-          displayMsg = await apicaller.acceptRest("", "/firstQuestion/");
+          //displayMsg = await apicaller.acceptRest("", "/firstQuestion/");
+          displayMsg = "There is a couple more information that I need before we can find you the right car. I will ask you some more questions to help filter the options ";
         }
         questionCounter++;
     } else { //otherwise accept user input and process
       displayMsg = await apicaller.acceptRest(messageContent, "/replies/");
+      if (displayMsg == "Please wait while I find the best car for you") {
+        gotReccomendation = true;
+      }
     }
 
     _sendMessage(false, displayMsg);
@@ -245,10 +250,11 @@ class _ChatScreenState extends State<ChatScreen> {
             height: 50, // Set desired height
             child: ElevatedButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/vin-lookup');
+                if (gotReccomendation)
+                {Navigator.pushNamed(context, '/vin-lookup');}
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple, // Button background color
+                backgroundColor: gotReccomendation ?Colors.deepPurple :const Color.fromARGB(255, 33, 33, 33)  , // Button background color
                 foregroundColor: Colors.white, // Button text color
                 textStyle: TextStyle(
                   fontFamily: 'Roboto', // Apply custom font
