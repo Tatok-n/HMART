@@ -4,8 +4,8 @@ from flask import Flask, request
 
 conversation = [{"role": "system", "content": "You are a helpful car salesman chatbot. If the user responds off-topic, acknowledge their comment politely and guide them back to answering the question at hand."}]
 
-
-
+DataCollected ={}
+finalDataCollected = []
 
 questions = {
    "year": "What year should the car be?",
@@ -98,6 +98,7 @@ def postReply(reply) :
     global questions
     global probed_specs
     global questionCounter
+    global DataCollected
     user_reply = request.view_args['reply']
     conversation.append({"role": "user", "content": user_reply})
     question = questions[probed_specs[questionCounter]]
@@ -106,13 +107,14 @@ def postReply(reply) :
     if relevance == "no" :
         return steerTowardsResponse(user_reply, question)
     else :
+        DataCollected[probed_specs[questionCounter]] = user_reply
         questionCounter += 1
-        conversation.append({"role": "assistant", "content": questions[probed_specs[questionCounter]]})
-        return generateQuirkyQuestion()
-
-
-
-
+        if questionCounter < (len(questions[probed_specs[questionCounter]]) -1):
+            conversation.append({"role": "assistant", "content": questions[probed_specs[questionCounter]]})
+            return generateQuirkyQuestion()
+        else:
+            summarizeAnswers()
+            return "Please wait while I find the best car for you"
 
 
 def steerTowardsResponse(user_reply, question) :
@@ -219,8 +221,50 @@ def ask_gpt(string):
         print(f"Error: {e}")
         return f"Error: {e}"
 
+def summarizeAnswers():
+    global DataCollected
+
+    global finalDataCollected
+
+    for index, key in enumerate(DataCollected):
+        summarize_answers = (f" I have a user input '{DataCollected[key]}', to the spec of a car '{probed_specs[index]}' I gave them freedom to write in any format they want"
+                            "Now you need to make the DataCollected[key] a one word answer. If you determine that the user input does not care for that option, make the answer None."
+                            " Your response must only contain one-word, without any additional text, characters, explanation, or comments. You must return that response as a string.  Examples are below:"
+                            f"So: 'Are you looking for a new or used car?' the answer should be either new, used, or None"
+                            f"'What year does the car need to be at minimum?' the answer should be a year or None"
+                            f"'Do you have a favorite car brand or a specific manufacturer in mind?' the answer should be a car brand name, or None"
+                            f"'What model are you interested in, if any?' the answer should be a car model name, or None"
+                            f"'What body type are you looking for? (e.g., sedan, SUV, truck)' the answer should be SUV, Sedan, Coupe, Truck, or None"
+                            f"'Do you prefer a car with easy access, like a four-door sedan, or would a two-door coupe be more your style?' the answer should be 4, 2, or None"
+                            f"'What exterior color are you looking for, if any?' the answer should return a color or None"
+                            f"'What interior color do you prefer for the car?' the answer should be light interior, dark interior, or None"
+                            f"'Do you prefer a car with a certain number of cylinders in the engine?' the answer should be a number (e.g., 4, 6, 8) or None"
+                            f"'Do you want the car to have a specific engine description or configuration?' the answer should be an engine description (e.g., V6, I4) or None"
+                            f"'What kind of transmission do you prefer? Automatic or manual?' the answer should be automatic, manual, or None"
+                            f"'Do you have a preferred engine type, like petrol or diesel?' the answer should be electric, hybrid, fuel, diesel, or None"
+                            f"'Do you have a preference for drivetrain type, such as front-wheel drive or all-wheel drive?' the answer should be FWD, AWD, RWD, or None"
+                            f"'Are you looking for a specific market class, such as compact, luxury, or sports car?' the answer should be compact, luxury, or None"
+                            f"'What is the minimum passenger capacity you need in the car?' the answer should be a number (e.g., 4, 5) or None"
+                            f"'What is the maximum mileage the car can have?' the answer should be either 'veryLow','low','medium','high','veryHigh, or None. Respect theses ranges 'veryLow'=(0,20000), 'low'=(20001,40000),'medium'=(40001,60000),'high'=(60001,80000),'veryHigh'=(80001,). If the user seems to not care how much mileage the car should have, then return as None."
+                            f"'What kind of fuel efficiency are you looking for in terms of miles per gallon?' the answer should be a number (e.g., 25 mpg) or None"
+                            "'What kind of budget are you thinking about for your car? Do you have a price range in mind?' the answer should be either 'veryLow','low','medium','high','veryHigh. Respect theses ranges: 'veryLow'=(0,10000), 'low'=(10001,25000),'medium'=(25001,50000),'high'=(500001,75000),'veryHigh'=(1000000,). If the user seems to not care how much the car will cost, then return as None."   ) 
+        
+        final_extraction_info = ask_gpt(summarize_answers)
+        if final_extraction_info == "None":
+            finalDataCollected.append(None)
+        finalDataCollected.append(final_extraction_info)
+
+
+    print(finalDataCollected) #for mathis
+    print("Please wait while I search for the dealership's recommendations.")
+
+
+
+
 def recommendedAlgo():
     global conversation
+    global probed_specs
+
     required_specs = list(questions.keys())  # this will make the keys into a list to input to is_full function
     user_answers = {}
     while not is_full(user_answers, required_specs):
@@ -234,7 +278,7 @@ def recommendedAlgo():
             user_answers[question] = user_input_f
 
 
-    summarize_answers = (f" I have a dictionary of user input '{user_answers[question]}', to the question '{question}' I gave them freedom to write in any format they want"
+    summarize_answers = (f" I have a dictionary of user input '{user_answers[question]}', to the question '{probed_specs[index]}' I gave them freedom to write in any format they want"
                                        "Now you need to make the user_answers[question] a one word answer. If you determine that the user input does not care for that option, make the answer None."
                                        " Your response must only contain the one-word or single-number answer, without any additional text, explanation, or comments.  Examples are below:"
                                        "So: 'Are you looking for a new or used car?' the answer should be either new, used, or None"
