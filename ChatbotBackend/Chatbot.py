@@ -8,31 +8,32 @@ conversation = [{"role": "system", "content": "You are a helpful car salesman ch
 
 
 questions = {
-    "type" : "Would you want a new or old car",
-    "year": "What year should the car be?",
-    "make": "Do you have a specific make of car in mind?",
-    "model": "Are you looking for a specific model of that make?",
-    "body": "What type of body style do you prefer (e.g., sedan, hatchback, convertible)?",
-    "door": "How many doors do you need on the car?",
-    "extColor": "What exterior color do you prefer?",
-    "intColor": "What interior color do you prefer?",
-    "engineCylinder": "How many cylinders would you like the engine to have?",
-    "transmission": "Do you prefer manual or automatic transmission?",
-    "engineBlock": "What type of engine block would you prefer?",
-    "engineDesc": "Do you have a preference for the engine description (e.g., turbo, hybrid)?",
-    "fuel": "Do you have a preference for fuel type (e.g., petrol, diesel, electric)?",
-    "driveTrain": "What type of drivetrain do you prefer (e.g., FWD, AWD, RWD)?",
-    "mktClass": "What class of car are you looking for (e.g., luxury, economy)?",
-    "capacity": "What is the required seating capacity?",
-    "mileage": "What is the acceptable mileage range for the car?",
-    "mpg": "What is the minimum miles per gallon (MPG) you'd like the car to have?",
-    "price": "What is your price range for the car?"
+   "year": "What year should the car be?",
+   "make": "Do you have a specific make of car in mind?",
+   "model": "Are you looking for a specific model of that make?",
+   "body": "What type of body style do you prefer (e.g., sedan, hatchback, convertible)?",
+   "door": "How many doors do you need on the car?",
+   "extColor": "What exterior color do you prefer?",
+   "intColor": "What interior color do you prefer?",
+   "engineCylinder": "How many cylinders would you like the engine to have?",
+   "transmission": "Do you prefer manual or automatic transmission?",
+   "engineBlock": "What type of engine block would you prefer?",
+   "engineDesc": "Do you have a preference for the engine description (e.g., turbo, hybrid)?",
+   "fuel": "Do you have a preference for fuel type (e.g., petrol, diesel, electric)?",
+   "driveTrain": "What type of drivetrain do you prefer (e.g., FWD, AWD, RWD)?",
+   "mktClass": "What class of car are you looking for (e.g., luxury, economy)?",
+   "capacity": "What is the required seating capacity?",
+   "mileage": "What is the acceptable mileage range for the car?",
+   "mpg": "What is the minimum miles per gallon (MPG) you'd like the car to have?",
+   "price": "What is your price range for the car?"
 }
+
 probed_specs = [
-    "type", "year", "make", "model", "body", "door", "extColor", "intColor",
-    "engineCylinder", "transmission", "engineBlock", "engineDesc", "fuel",
-    "driveTrain", "mktClass", "capacity", "mileage", "mpg", "price"
+   "type", "year", "make", "model", "body", "door", "extColor", "intColor",
+   "engineCylinder", "transmission", "engineBlock", "engineDesc", "fuel",
+   "driveTrain", "mktClass", "capacity", "mileage", "mpg", "price"
 ]
+
 
 questionCounter = 0
 app = Flask(__name__)
@@ -233,23 +234,21 @@ def recommendedAlgo():
             user_answers[question] = user_input_f
 
 
-    summarize_answers = (
-        f"I have a dictionary '{user_answers}' which contains a question in the key position and an answer in the value position"
-        "I want you to take the user's answers and return them as a one word answer. We gave them freedom to type and its now your job to summarize the answers"
-        "Answers that insinuate that the user does not mind you should return as No preference "
-        "Return a list of answers, keep them in order"
-        "So: 'Are you looking for a new or used car?' the answer should be either new, used, or No preference"
-        "'What year does the car need to be at minimum?' the answer should be a year or No preference"
-        "'Do you have a favorite car brand or a specific manufacturer in mind?' the answer should be a car brand name, or No preference"
-        "'Would you prefer a sleek, sporty design or something more spacious like an SUV or sedan?' the answer should be SUV, Sedan, Coupe, or No preference"
-        "'Do you prefer a car with easy access, like a four-door sedan, or would a two-door coupe be more your style?' the answer should be 4,2, or No preference "
-        "'Is there a specific color that catches your eye when you're looking for a car?' the answer should return a color or No preference"
-        "'When sitting inside a car, do you like a lighter, airy feel or something darker and more elegant?' the answer should be light interior, dark interior or No preference"
-        "'Do you prefer a car that shifts gears manually, or are you more comfortable with automatic transmission?' the answer should be automatic, manual or No preference"
-        "'What is the maximum mileage the car can have?' the answer should be a number or No preference"
-        "'What kind of budget are you thinking about for your car? Do you have a price range in mind?' the answer should be a number, range of numbers, or No preference"
-        "'Are you leaning toward an eco-friendly car (electric or hybrid) or prefer a traditional petrol/diesel vehicle?' the answer should be electric, hybrid, fuel, diesel, or No preference "
-        "'How many people do you usually travel with? Do you need a car that fits the family or a smaller one for personal trips?' the answer should give a number or No preference")
+    summarize_answers = (f" I have a dictionary of user input '{user_answers[question]}', to the question '{question}' I gave them freedom to write in any format they want"
+                                       "Now you need to make the user_answers[question] a one word answer. If you determine that the user input does not care for that option, make the answer None."
+                                       " Your response must only contain the one-word or single-number answer, without any additional text, explanation, or comments.  Examples are below:"
+                                       "So: 'Are you looking for a new or used car?' the answer should be either new, used, or None"
+                                       "'What year does the car need to be at minimum?' the answer should be a year or None"
+                                       "'Do you have a favorite car brand or a specific manufacturer in mind?' the answer should be a car brand name, or None"
+                                       "'Would you prefer a sleek, sporty design or something more spacious like an SUV or sedan?' the answer should be SUV, Sedan, Coupe, or None"
+                                       "'Do you prefer a car with easy access, like a four-door sedan, or would a two-door coupe be more your style?' the answer should be 4,2, or None "
+                                       "'Is there a specific color that catches your eye when you're looking for a car?' the answer should return a color or None"
+                                       "'When sitting inside a car, do you like a lighter, airy feel or something darker and more elegant?' the answer should be light interior, dark interior or None"
+                                       "'Do you prefer a car that shifts gears manually, or are you more comfortable with automatic transmission?' the answer should be automatic, manual or None"
+                                       "'What is the maximum mileage the car can have?' the answer should be either 'veryLow','low','medium','high','veryHigh, or None. Respect theses ranges 'veryLow'=(0,20000), 'low'=(20001,40000),'medium'=(40001,60000),'high'=(60001,80000),'veryHigh'=(80001,). If the user seems to not care how much mileage the car should have, then return as None."
+                                       "'What kind of budget are you thinking about for your car? Do you have a price range in mind?' the answer should be either 'veryLow','low','medium','high','veryHigh. Respect theses ranges: 'veryLow'=(0,10000), 'low'=(10001,25000),'medium'=(25001,50000),'high'=(500001,75000),'veryHigh'=(1000000,). If the user seems to not care how much the car will cost, then return as None."
+                                       "'Are you leaning toward an eco-friendly car (electric or hybrid) or prefer a traditional petrol/diesel vehicle?' the answer should be electric, hybrid, fuel, diesel, or None "
+                                       "'How many people do you usually travel with? Do you need a car that fits the family or a smaller one for personal trips?' the answer should give a number or None")
 
     final_extraction_info = ask_gpt(summarize_answers)
     print(final_extraction_info)
