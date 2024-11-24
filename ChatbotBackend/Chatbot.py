@@ -1,7 +1,7 @@
 import openai
 
+from flask import Flask, request
 
-from flask import Flask,request
 app = Flask(__name__)
 currentResponse = ""
 chosenPath = 0
@@ -9,7 +9,7 @@ chosenPath = 0
 
 @app.route("/firstReply/", methods=["POST"])
 def firstPrompt():
-    #response = request.view_args['reply']
+    # response = request.view_args['reply']
     choice_of_model = (
         f"From the user's input 'I want the reccomendation software' I want you to determine what there answer to the question: "
         "'Do you want to use our car recommendation software or would you like to tell me what type of car you are looking for?"
@@ -19,16 +19,21 @@ def firstPrompt():
     choice = ask_gpt(choice_of_model)
     chosenPath = int(choice)
     return choice
+
+
 int_choice = int(firstPrompt())
+
+
 @app.route("/test/", methods=["GET"])
-def test(int_choice) :
+def test(int_choice):
     if int_choice == 0:
         return "123"
-    else  :
+    else:
         return "1234"
 
+
 def ask_user_with_gpt(question, conversation):
-    #Use OpenAI API to ask the user a question, handle off-topic responses, and circle back to the original question.
+    # Use OpenAI API to ask the user a question, handle off-topic responses, and circle back to the original question.
     conversation.append({"role": "assistant", "content": question})
     try:
         # Generate a response to the question
@@ -36,12 +41,13 @@ def ask_user_with_gpt(question, conversation):
             model="gpt-3.5-turbo",
             messages=conversation,
             max_tokens=100,
-            temperature=0.7 #allows for creative answers
+            temperature=0.7  # allows for creative answers
         )
+
         def user_replies():
             return response["choices"][0]["message"]["content"].strip()
-        
-        user_reply = currentResponse #chat gpt response is the string at the ask and user_reply is user input
+
+        user_reply = currentResponse  # chat gpt response is the string at the ask and user_reply is user input
         conversation.append({"role": "user", "content": user_reply})
 
         # Check if the user's response is on-topic
@@ -72,7 +78,7 @@ def ask_user_with_gpt(question, conversation):
             )
             chatbot_reply_off_topic = off_topic_response["choices"][0]["message"]["content"].strip()
             conversation.append({"role": "assistant", "content": chatbot_reply_off_topic})
-            print(chatbot_reply_off_topic) #ui display
+            print(chatbot_reply_off_topic)  # ui display
 
             # ask the original question again
             return ask_user_with_gpt(question, conversation)
@@ -80,16 +86,16 @@ def ask_user_with_gpt(question, conversation):
         # If the response is relevant, return it and add to history
         conversation.append({"role": "user", "content": user_reply})
         return user_reply
-    
+
     except Exception as e:
         print(f"Error with OpenAI API: {e}")
         return "Error code "
 
-    
+
 def ask_gpt(string):
     # Ask ChatGPT
     prompt = f"'{string}'"
-    
+
     try:
         completion = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",  # Use gpt-3.5-turbo
@@ -107,18 +113,20 @@ def ask_gpt(string):
         print(f"Error: {e}")
         return f"Error: {e}"
 
+
 def first_prompt():
-    return ("Do you want to use our car recommendation software or would you like to tell me what type of car you are looking for?")
+    return (
+        "Do you want to use our car recommendation software or would you like to tell me what type of car you are looking for?")
 
 
 def is_full(dictionary, required_keys):
-    #check if all the info we're looking for are present in the dictionary
+    # check if all the info we're looking for are present in the dictionary
     return all(key in dictionary and dictionary[key] not in [None, ""] for key in required_keys)
 
 
 probed_specs = [
-    "type", "year", "make", "model", "body", "door", "extColor", "intColor", 
-    "engineCylinder", "transmission", "engineBlock", "engineDesc", "fuel", 
+    "type", "year", "make", "model", "body", "door", "extColor", "intColor",
+    "engineCylinder", "transmission", "engineBlock", "engineDesc", "fuel",
     "driveTrain", "mktClass", "capacity", "mileage", "mpg", "price"
 ]
 
@@ -144,12 +152,7 @@ questions = {
 }
 
 
-     
-    
-
-
-
-def elseChoice() :
+def elseChoice():
     required_keys = list(questions.keys())  # this will make the keys into a list to input to is_full function
     user_answers = {}
     while not is_full(user_answers, required_keys):
@@ -188,7 +191,8 @@ def elseChoice() :
     print(final_extraction_info)
     print("Please wait while I search for the dealership's recommendations.")
 
-def givesDescription() :
+
+def givesDescription():
     user_spec = currentResponse
     what_to_do = (
         f"I want you to look at the input '{user_spec}' from the user and make a list with the indices respecting this order:"
@@ -200,7 +204,6 @@ def givesDescription() :
     # this block will determine the specs that were not extracted from the user's prompt and get you a list of specs that were not scraped from user prommpt
     final_extraction_info = ask_gpt(what_to_do)
     unfound_specs_index = []
-
 
     for i in range(len(final_extraction_info)):  # Using range to get indices
         if (final_extraction_info[i] == None):
