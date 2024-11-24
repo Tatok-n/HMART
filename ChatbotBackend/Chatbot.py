@@ -110,7 +110,7 @@ def postReply(reply) :
     user_reply = request.view_args['reply']
     conversation.append({"role": "user", "content": user_reply})
 
-    if (chosenPath == 0) : #user wants to use the recomendation software
+    if (chosenPath == 0) : #user wants to use the recomendation software, returns DataCollected
         question = questions[probed_specs[questionCounter]]
         relevance = checkRelevance(user_reply, question)
         if relevance == "no" :
@@ -124,7 +124,7 @@ def postReply(reply) :
             else:
                 summarizeAnswers()
                 return "Please wait while I find the best car for you"
-    else :
+    else : #returns finalExtractedList
         user_spec = currentResponse
         extractedList = []
         
@@ -162,23 +162,31 @@ def postReply(reply) :
             final_extraction_info = ask_gpt(summarize_answers)
             finalExtractedList.append(final_extraction_info)
 
-            if finalExtractedList[index] == "None":
-                noneCount += 1 # used to count how many Nones we have 
-                question = questions[probed_specs[index]]
-                relevance = checkRelevance(user_reply, question)
-                if relevance == "no":
-                    return steerTowardsResponse(user_reply, question)
+        none_count = 0
+        for i in range(len(finalExtractedList)):
+            if finalExtractedList[i] == "None":
+                # Ask a question for the missing spec
+                question = questions[probed_specs[i]]
+                response = ask_gpt(f"{question}. User said: {user_reply}")
+                
+                # Check if a valid response was received
+                if response and response.lower() != "none":
+                    finalExtractedList[i] = response
+                    DataCollected[probed_specs[i]] = response
                 else:
-                    finalExtractedList[index] = user_reply
-                    conversation.append({"role": "assistant", "content": question})
-                    questionCounter += 1 
+                    none_count += 1  # Track how many are still unanswered
 
-                    if noneCount < questionCounter:
-                        conversation.append({"role": "assistant", "content": question})
-                        return generateQuirkyQuestion()
-                    else:
-                        summarizeAnswers()
-                        return "Please wait while I find the best car for you"
+        # Check if all "None" values are replaced
+        if none_count == 0:
+            summarizeAnswers()
+            return "Please wait while I find the best car for you"  # All specs are filled
+
+        # If there are still unanswered specs then ask the next missing one
+        next_missing_index = finalExtractedList.index("None")
+        next_question = questions[probed_specs[next_missing_index]]
+        conversation.append({"role": "assistant", "content": next_question})
+        return generateQuirkyQuestion()
+    
 
         
 
