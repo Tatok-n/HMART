@@ -1,37 +1,32 @@
-name: hmartfrontend
+name: flutter_application_1
 description: "A new Flutter project."
-
-publish_to: "none"
+publish_to: 'none'
 
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.5.4
+  sdk: '>=3.4.3 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^1.0.6
+  http: ^1.2.2
+  google_fonts: ^5.0.0
+  font_awesome_flutter: ^10.5.0
   flutter_chat_ui: ^1.6.15
   audioplayers: ^6.1.0
-  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  audioplayers: ^6.1.0
-  flutter_lints: ^4.0.0
+  flutter_lints: ^3.0.0
 
 flutter:
   uses-material-design: true
+  
   assets:
-    - assets/SUPER_SECRET_ASSET.png
-    - assets/sounds/580590_All-Star-8bit-Remix.mp3
-
-  fonts:
-    - family: Roboto
-      fonts:
-        - asset: assets/fonts/Roboto-Regular.ttf
-        - asset: assets/fonts/Roboto-Bold.ttf
-          weight: 700
+    - images/galaxy.jpg
+    - images/galaxy2.jpg
+    - images/galaxy3.jpg
+    - images/galaxy4.jpg
