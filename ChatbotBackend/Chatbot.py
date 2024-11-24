@@ -30,6 +30,7 @@ questions = {
     "price": "What is your price range for the car?"
 }
 
+
 probed_specs = [
    "type", "year", "make", "model", "body", "door", "extColor", "intColor",
    "engineCylinder", "transmission", "engineBlock", "engineDesc", "fuel",
