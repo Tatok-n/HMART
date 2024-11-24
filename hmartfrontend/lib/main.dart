@@ -142,13 +142,21 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chatbot'),
+        title: const Text(
+          'Chatbot',
+          style: TextStyle(color: Colors.white), // Customize the app bar title color
+        ),
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
-              colors: <Color>[Colors.black, Colors.black, gradientStartBot, Color.fromARGB(255, 184, 122, 255)],
+              colors: <Color>[
+                Colors.black,
+                Colors.black,
+                gradientStartBot,
+                Color.fromARGB(255, 184, 122, 255)
+              ],
             ),
           ),
         ),
@@ -186,8 +194,36 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ],
           ),
+
           Positioned(
-            bottom: 8,
+            bottom: 20, // Adjusted to make space for the new button
+            left: 400,
+            right: 400,
+            child: SizedBox(
+              width: 100, // Set desired width
+              height: 50, // Set desired height
+              child: ElevatedButton(
+                onPressed: () {
+                  // Add your navigation or function call logic here
+                  Navigator.pushNamed(context, '/vin-lookup');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple, // Background color
+                  foregroundColor: Colors.white, // Text color
+                ),
+                child: const Text(
+                  'Select a Car', 
+                  style: TextStyle(
+                    //fontWeight: FontWeight.bold, // Make the text bold
+                    fontSize: 18, // Increase the text size
+                  ),
+                ), // Text inside the button
+              ),
+            ),
+          ),
+
+          Positioned(
+            bottom: 70,
             left: 8,
             right: 8,
             child: Padding(
@@ -243,6 +279,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 }
+
 
 class ImagePrompt extends StatelessWidget {
   @override
