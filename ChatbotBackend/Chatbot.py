@@ -1,7 +1,7 @@
 import openai
 
 from flask import Flask, request
-
+rules = {"Are you interested in a brand new car, a used car, or you don't mind?": ['new','used','None']}
 conversation = [{"role": "system", "content": "You are a helpful car salesman chatbot. If the user responds off-topic, acknowledge their comment politely and guide them back to answering the question at hand."}]
 
 DataCollected ={}
@@ -237,33 +237,50 @@ def ask_gpt(string):
         print(f"Error: {e}")
         return f"Error: {e}"
 
+def load_rules_from_csv(questions):
+    
+    csv_file_list = ['years.csv','makes.csv','models.csv','bodies.csv','doors.csv','extColors.csv','intColors.csv','engineCylinders.csv','engineDescs.csv','transmissions.csv','engineBlocks.csv','driveTrain.csv','mktClasses.csv','capacity.csv','mileage.csv','fuels.csv','']
+    rules = {}
+
+    if len(questions) != len(csv_file_list):
+        raise ValueError("The number of questions does not match the number of CSV files.")
+    
+  
+    for i, question in enumerate(questions):
+        file_path = csv_file_list[i]
+        
+        # Load options from the CSV file
+        options = []
+        with open(file_path, mode='r') as file:
+            for line in file:
+                option = line.strip()  # Remove whitespace and newlines
+                if option:  # Skip empty lines
+                    options.append(option)
+        
+        # Add "None" as a default option
+        options.append("None")
+        
+        # Map the question to the options
+        rules[question] = options
+
+    return rules
+
+
+
 def summarizeAnswers():
     global DataCollected
     global finalDataCollected
-
+    load_rules_from_csv(questions)
+    
     for index, key in enumerate(DataCollected):
         summarize_answers = (f" I have a user input '{DataCollected[key]}', to the spec of a car '{probed_specs[index]}' I gave them freedom to write in any format they want"
-                            "Now you need to make the user input a one word answer. If you determine that the user input does not care for that option, make the answer None."
-                            " Your response must only contain one-word, without any additional text, characters, explanation, or comments. You must return that response as a string.  Examples are below:"
-                            f"So: 'Are you looking for a new or used car?' the answer should be either new, used, or None"
-                            f"'What year does the car need to be at minimum?' the answer should be a year or None"
-                            f"'Do you have a favorite car brand or a specific manufacturer in mind?' the answer should be a car brand name, or None"
-                            f"'What model are you interested in, if any?' the answer should be a car model name, or None"
-                            f"'What body type are you looking for? (e.g., sedan, SUV, truck)' the answer should be SUV, Sedan, Coupe, Truck, or None"
-                            f"'Do you prefer a car with easy access, like a four-door sedan, or would a two-door coupe be more your style?' the answer should be 4, 2, or None"
-                            f"'What exterior color are you looking for, if any?' the answer should return a color or None"
-                            f"'What interior color do you prefer for the car?' the answer should be light interior, dark interior, or None"
-                            f"'Do you prefer a car with a certain number of cylinders in the engine?' the answer should be a number (e.g., 4, 6, 8) or None"
-                            f"'Do you want the car to have a specific engine description or configuration?' the answer should be an engine description (e.g., V6, I4) or None"
-                            f"'What kind of transmission do you prefer? Automatic or manual?' the answer should be automatic, manual, or None"
-                            f"'Do you have a preferred engine type, like petrol or diesel?' the answer should be electric, hybrid, fuel, diesel, or None"
-                            f"'Do you have a preference for drivetrain type, such as front-wheel drive or all-wheel drive?' the answer should be FWD, AWD, RWD, or None"
-                            f"'Are you looking for a specific market class, such as compact, luxury, or sports car?' the answer should be compact, luxury, or None"
-                            f"'What is the minimum passenger capacity you need in the car?' the answer should be a number (e.g., 4, 5) or None"
-                            f"'What is the maximum mileage the car can have?' the answer should be either 'veryLow','low','medium','high','veryHigh, or None. Respect theses ranges 'veryLow'=(0,20000), 'low'=(20001,40000),'medium'=(40001,60000),'high'=(60001,80000),'veryHigh'=(80001,). If the user seems to not care how much mileage the car should have, then return as None."
+                            "Now you need to make the DataCollected[key] a one word answer. If you determine that the user input does not care for that option, make the answer None."
+                            " Your response must only contain one-word, without any additional text, characters, explanation, or comments. You must return that response as a string. "
+                            f"The set of rules that you must use to know what to return is '{rules}'. So questions that are similar to the the keys from '{rules}' will use values from '{rules}' only."
+                            f"You must also return for mileage:'veryLow','low','medium','high','veryHigh, or None. Respect theses ranges 'veryLow'=(0,20000), 'low'=(20001,40000),'medium'=(40001,60000),'high'=(60001,80000),'veryHigh'=(80001,). If the user seems to not care how much mileage the car should have, then return as 'None'. "
                             f"'What kind of fuel efficiency are you looking for in terms of miles per gallon?' the answer should be a number (e.g., 25 mpg) or None"
-                            "'What kind of budget are you thinking about for your car? Do you have a price range in mind?' the answer should be either 'veryLow','low','medium','high','veryHigh. Respect theses ranges: 'veryLow'=(0,10000), 'low'=(10001,25000),'medium'=(25001,50000),'high'=(500001,75000),'veryHigh'=(1000000,). If the user seems to not care how much the car will cost, then return as None."   ) 
-        
+                            "'What kind of budget are you thinking about for your car? Do you have a price range in mind?' the answer should be either 'veryLow','low','medium','high','veryHigh. Respect theses ranges: 'veryLow'=(0,10000), 'low'=(10001,25000),'medium'=(25001,50000),'high'=(500001,75000),'veryHigh'=(1000000,). If the user seems to not care how much the car will cost, then return as None." 
+                            f"You must also return for price:'veryLow','low','medium','high','veryHigh, or None. Respect theses ranges 'veryLow','low','medium','high','veryHigh. Respect theses ranges: 'veryLow'=(0,10000), 'low'=(10001,25000),'medium'=(25001,50000),'high'=(500001,75000),'veryHigh'=(1000000,). If the user seems to not care how much the car will cost, then return as None.") 
         final_extraction_info = ask_gpt(summarize_answers)
         if final_extraction_info == "None":
             finalDataCollected.append(None)
@@ -272,6 +289,7 @@ def summarizeAnswers():
 
     print(finalDataCollected) #for mathis
     print("Please wait while I search for the dealership's recommendations.")
+
 
 
 
