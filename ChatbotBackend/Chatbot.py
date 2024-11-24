@@ -2,14 +2,46 @@ import openai
 
 from flask import Flask, request
 
-app = Flask(__name__)
+
+questions = {
+    "year": "What year should the car be?",
+    "make": "Do you have a specific make of car in mind?",
+    "model": "Are you looking for a specific model of that make?",
+    "body": "What type of body style do you prefer (e.g., sedan, hatchback, convertible)?",
+    "door": "How many doors do you need on the car?",
+    "extColor": "What exterior color do you prefer?",
+    "intColor": "What interior color do you prefer?",
+    "engineCylinder": "How many cylinders would you like the engine to have?",
+    "transmission": "Do you prefer manual or automatic transmission?",
+    "engineBlock": "What type of engine block would you prefer?",
+    "engineDesc": "Do you have a preference for the engine description (e.g., turbo, hybrid)?",
+    "fuel": "Do you have a preference for fuel type (e.g., petrol, diesel, electric)?",
+    "driveTrain": "What type of drivetrain do you prefer (e.g., FWD, AWD, RWD)?",
+    "mktClass": "What class of car are you looking for (e.g., luxury, economy)?",
+    "capacity": "What is the required seating capacity?",
+    "mileage": "What is the acceptable mileage range for the car?",
+    "mpg": "What is the minimum miles per gallon (MPG) you'd like the car to have?",
+    "price": "What is your price range for the car?"
+}
+probed_specs = [
+    "type", "year", "make", "model", "body", "door", "extColor", "intColor",
+    "engineCylinder", "transmission", "engineBlock", "engineDesc", "fuel",
+    "driveTrain", "mktClass", "capacity", "mileage", "mpg", "price"
+]
+
+'''app = Flask(__name__)
 currentResponse = ""
 chosenPath = 0
+'''
+
+def printToReturn(string):
+    return (string)
 
 
-@app.route("/firstReply/", methods=["POST"])
+currentResponse = ""
+#@app.route("/firstReply/", methods=["POST"])
 def firstPrompt():
-    # response = request.view_args['reply']
+    #response = request.view_args['reply']
     choice_of_model = (
         f"From the user's input 'I want the reccomendation software' I want you to determine what there answer to the question: "
         "'Do you want to use our car recommendation software or would you like to tell me what type of car you are looking for?"
@@ -17,21 +49,13 @@ def firstPrompt():
         "and return 1 if the user does not want to use the recommendation software."
         "Do not povide any additional explanation, text, or characters only return the integer.")
     choice = ask_gpt(choice_of_model)
-    chosenPath = int(choice)
-    return choice
-
-
-int_choice = int(firstPrompt())
-
-
-@app.route("/test/", methods=["GET"])
-def test(int_choice):
-    if int_choice == 0:
-        return "123"
-    else:
-        return "1234"
-
-
+    try:
+        choice = int(choice)  # Convert the string response to an integer
+        return choice  # Return the integer value
+    except ValueError:
+        print(f"Unexpected response from GPT: {choice}")
+        return -1
+    
 def ask_user_with_gpt(question, conversation):
     # Use OpenAI API to ask the user a question, handle off-topic responses, and circle back to the original question.
     conversation.append({"role": "assistant", "content": question})
@@ -44,8 +68,7 @@ def ask_user_with_gpt(question, conversation):
             temperature=0.7  # allows for creative answers
         )
 
-        def user_replies():
-            return response["choices"][0]["message"]["content"].strip()
+        printToReturn(response["choices"][0]["message"]["content"].strip())
 
         user_reply = currentResponse  # chat gpt response is the string at the ask and user_reply is user input
         conversation.append({"role": "user", "content": user_reply})
@@ -91,7 +114,6 @@ def ask_user_with_gpt(question, conversation):
         print(f"Error with OpenAI API: {e}")
         return "Error code "
 
-
 def ask_gpt(string):
     # Ask ChatGPT
     prompt = f"'{string}'"
@@ -113,61 +135,19 @@ def ask_gpt(string):
         print(f"Error: {e}")
         return f"Error: {e}"
 
-
-def first_prompt():
-    return (
-        "Do you want to use our car recommendation software or would you like to tell me what type of car you are looking for?")
-
-
-def is_full(dictionary, required_keys):
-    # check if all the info we're looking for are present in the dictionary
-    return all(key in dictionary and dictionary[key] not in [None, ""] for key in required_keys)
-
-
-probed_specs = [
-    "type", "year", "make", "model", "body", "door", "extColor", "intColor",
-    "engineCylinder", "transmission", "engineBlock", "engineDesc", "fuel",
-    "driveTrain", "mktClass", "capacity", "mileage", "mpg", "price"
-]
-
-questions = {
-    "year": "What year should the car be?",
-    "make": "Do you have a specific make of car in mind?",
-    "model": "Are you looking for a specific model of that make?",
-    "body": "What type of body style do you prefer (e.g., sedan, hatchback, convertible)?",
-    "door": "How many doors do you need on the car?",
-    "extColor": "What exterior color do you prefer?",
-    "intColor": "What interior color do you prefer?",
-    "engineCylinder": "How many cylinders would you like the engine to have?",
-    "transmission": "Do you prefer manual or automatic transmission?",
-    "engineBlock": "What type of engine block would you prefer?",
-    "engineDesc": "Do you have a preference for the engine description (e.g., turbo, hybrid)?",
-    "fuel": "Do you have a preference for fuel type (e.g., petrol, diesel, electric)?",
-    "driveTrain": "What type of drivetrain do you prefer (e.g., FWD, AWD, RWD)?",
-    "mktClass": "What class of car are you looking for (e.g., luxury, economy)?",
-    "capacity": "What is the required seating capacity?",
-    "mileage": "What is the acceptable mileage range for the car?",
-    "mpg": "What is the minimum miles per gallon (MPG) you'd like the car to have?",
-    "price": "What is your price range for the car?"
-}
-
-
-def elseChoice():
-    required_keys = list(questions.keys())  # this will make the keys into a list to input to is_full function
+def recommendedAlgo(conversation):
+    required_specs = list(questions.keys())  # this will make the keys into a list to input to is_full function
     user_answers = {}
-    while not is_full(user_answers, required_keys):
+    while not is_full(user_answers, required_specs):
         for key, question in questions.items():
             # Skip if already answered
-            if key in user_answers and user_answers[key] not in [None,
-                                                                 ""]:  # [None,""] notation is used to check if the dictionary has a NULL spot
+            if key in user_answers and user_answers[key] not in [None, ""]:  # [None,""] notation is used to check if the dictionary has a NULL spot
                 continue
-
-        conversation = [{"role": "system",
-                         "content": "You are a helpful car salesman chatbot. If the user responds off-topic, acknowledge their comment politely and guide them back to answering the question at hand."}]
 
         for question in questions:
             user_input_f = ask_user_with_gpt(question, conversation)
             user_answers[question] = user_input_f
+
 
     summarize_answers = (
         f"I have a dictionary '{user_answers}' which contains a question in the key position and an answer in the value position"
@@ -191,15 +171,23 @@ def elseChoice():
     print(final_extraction_info)
     print("Please wait while I search for the dealership's recommendations.")
 
+def first_prompt():
+    return (
+        "Do you want to use our car recommendation software or would you like to tell me what type of car you are looking for?")
 
-def givesDescription():
+
+def is_full(dictionary, required_specs):
+    # check if all the info we're looking for are present in the dictionary
+    return all(key in dictionary and dictionary[key] not in [None, ""] for key in required_specs)
+
+
+def tellUsCar(questions, probed_specs, conversation): 
     user_spec = currentResponse
     what_to_do = (
-        f"I want you to look at the input '{user_spec}' from the user and make a list with the indices respecting this order:"
-        "type, year, make, model, body,door,extColor,intColor,engineCylinder,"
-        "transmission,engineBlock,engineDesc,fuel,driveTrain,mktClass,capacity,mileage"
-        " If you cannot determine one of these elements from the user input, then leave them as None."
-        "The list must be made of one word for each element")
+    f"The input from the user '{user_spec}' is a car description. I want you to look at the input '{user_spec}' from the user and make an ordered list:"
+    "[type,year, make, model, body, door, extColor, intColor, engineCylinder, transmission, engineBlock, engineDesc, fuel,driveTrain, mktClass, capacity, mileage, mpg, price]"
+    " If you cannot determine one of these elements from the user input, then leave them as None."
+    "The list must be made of one word for each element")
 
     # this block will determine the specs that were not extracted from the user's prompt and get you a list of specs that were not scraped from user prommpt
     final_extraction_info = ask_gpt(what_to_do)
@@ -214,9 +202,9 @@ def givesDescription():
     for i in unfound_specs_index:
         unfound_specs.append(probed_specs[i])  # Use append to add elements from probed_specs
 
-    conversation = [{"role": "system", "content": "You are a helpful car expert chatbot."}]
-    print(
-        "There is a couple more information that I need before we can find you the right car. I will ask you some more questions to help filter the options ")
+
+    printToReturn("There is a couple more information that I need before we can find you the right car. I will ask you some more questions to help filter the options ")
+    
     for spec in unfound_specs:
         if (spec in questions):
             question = questions[spec]
@@ -242,6 +230,32 @@ def givesDescription():
             spec_index = probed_specs.index(spec)
             final_extraction_info[spec_index] = final_form_Uinput
             return question
+        
+modelChoice = firstPrompt() # determines the type of model the Chatbot should do
+
+if modelChoice == 1:
+    conversation = [{"role": "system", "content": "You are a helpful car salesman chatbot. If the user responds off-topic, acknowledge their comment politely and guide them back to answering the question at hand."}]
+    tellUsCar(questions, probed_specs,conversation)
+else:
+    conversation = [{"role": "system", "content": "You are a helpful car salesman chatbot. If the user responds off-topic, acknowledge their comment politely and guide them back to answering the question at hand."}]
+    recommendedAlgo(conversation)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
