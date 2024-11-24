@@ -282,7 +282,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                     child: Row(
-                      children: [
+                       children: [
                         Expanded(
                           child: TextField(
                           controller: _controller,
@@ -299,17 +299,6 @@ class _ChatScreenState extends State<ChatScreen> {
                             fontFamily: 'Roboto', // Apply custom font
                             fontSize: 16, // Font size for input
                             color: Colors.white, // Input text color
-                            controller: _controller,
-                            decoration: const InputDecoration(
-                              hintText: 'Type a message',
-                              border: InputBorder.none,
-                            ),
-                            onEditingComplete: () {
-                              String prompt = _controller.text;
-                              _sendMessage(true, _controller.text);
-                              processResponse(prompt);
-                            },
-                            style: const TextStyle(color: Color.fromARGB(255, 163, 110, 255)),
                           ),
                         ),
 
