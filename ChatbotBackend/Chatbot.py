@@ -63,7 +63,7 @@ def firstPrompt(reply):
     chosenPath = int(choice)
     try:
           # Convert the string response to an integer
-        return choice  # Return the integer value
+        return "0"  # Returns the user choice, hard coded to 0 for now
     except ValueError:
         print(f"Unexpected response from GPT: {choice}")
         return -1
@@ -101,7 +101,7 @@ def postReply(reply) :
 
     user_reply = request.view_args['reply']
     conversation.append({"role": "user", "content": user_reply})
-
+    chosenPath = 0
     if (chosenPath == 0) : #user wants to use the recomendation software, returns DataCollected
         question = questions[probed_specs[questionCounter]]
         relevance = checkRelevance(user_reply, question)
