@@ -39,10 +39,16 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 100, 4, 255)),
-        useMaterial3: true,
+      fontFamily: 'Roboto', // Apply the custom font globally
+      textTheme: TextTheme(
+        bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
+        bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
+        titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
       ),
-      home: ChatScreen(), // Set ChatScreen as the home screen
+      colorScheme: ColorScheme.fromSeed(seedColor: Color.fromARGB(255, 100, 4, 255)),
+      useMaterial3: true,
+    ),
+      home: ChatScreen(),
       routes: {
         '/vin-lookup': (context) => VINLookupPage(apiUrl: 'http://127.0.0.1:5000/vehicle'),
       },
@@ -200,26 +206,24 @@ class _ChatScreenState extends State<ChatScreen> {
             left: 400,
             right: 400,
             child: SizedBox(
-              width: 100, // Set desired width
-              height: 50, // Set desired height
-              child: ElevatedButton(
-                onPressed: () {
-                  // Add your navigation or function call logic here
-                  Navigator.pushNamed(context, '/vin-lookup');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple, // Background color
-                  foregroundColor: Colors.white, // Text color
+            width: 100, // Set desired width
+            height: 50, // Set desired height
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/vin-lookup');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple, // Button background color
+                foregroundColor: Colors.white, // Button text color
+                textStyle: TextStyle(
+                  fontFamily: 'Roboto', // Apply custom font
+                  fontSize: 18, // Font size
+                  fontWeight: FontWeight.bold, // Optional: Make the text bold
                 ),
-                child: const Text(
-                  'Select a Car', 
-                  style: TextStyle(
-                    //fontWeight: FontWeight.bold, // Make the text bold
-                    fontSize: 18, // Increase the text size
-                  ),
-                ), // Text inside the button
               ),
+              child: const Text('Select a Car'),
             ),
+          )
           ),
 
           Positioned(
@@ -246,18 +250,23 @@ class _ChatScreenState extends State<ChatScreen> {
                       children: [
                         Expanded(
                           child: TextField(
-                            controller: _controller,
-                            decoration: const InputDecoration(
-                              hintText: 'Type a message',
-                              border: InputBorder.none,
-                            ),
-                            onEditingComplete: () {
-                              String prompt = _controller.text;
-                              _sendMessage(true, _controller.text);
-                              processResponse(prompt);
-                            },
-                            style: const TextStyle(color: Colors.white),
+                          controller: _controller,
+                          decoration: const InputDecoration(
+                            hintText: 'Type a message',
+                            border: InputBorder.none,
                           ),
+                          onEditingComplete: () {
+                            String prompt = _controller.text;
+                            _sendMessage(true, _controller.text);
+                            processResponse(prompt);
+                          },
+                          style: const TextStyle(
+                            fontFamily: 'Roboto', // Apply custom font
+                            fontSize: 16, // Font size for input
+                            color: Colors.white, // Input text color
+                          ),
+                        ),
+
                         ),
                         IconButton(
                           icon: const Icon(Icons.send, color: Color.fromARGB(255, 153, 0, 255)),
