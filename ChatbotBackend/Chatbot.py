@@ -105,7 +105,7 @@ def postReply(reply) :
     global DataCollected
     global chosenPath
     global finalExtractedList
-    noneCount = 0
+    
 
     user_reply = request.view_args['reply']
     conversation.append({"role": "user", "content": user_reply})
