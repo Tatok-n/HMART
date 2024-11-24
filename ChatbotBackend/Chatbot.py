@@ -1,6 +1,6 @@
 import openai
 
-openai.api_key = "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"
+openai.api_key = ""
 
 def ask_user_with_gpt(question, conversation):
     #Use OpenAI API to ask the user a question, handle off-topic responses, and circle back to the original question.
