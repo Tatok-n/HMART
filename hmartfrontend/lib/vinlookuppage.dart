@@ -16,13 +16,6 @@ class _VINLookupPageState extends State<VINLookupPage> {
   List<Product> products = [];
   bool isLoading = true;
 
-  // Hardcoded VINs for testing
-  List<String> vinList = [
-    'A9FGFF8ST43CEFJ3Y', // Make sure this matches your CSV
-    '3RCKVP1GRJK1F6A8A', // Replace with real VINs from your CSV
-    'W0XGHYEYHC5PZWWHR'  // Replace with real VINs from your CSV
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -32,40 +25,53 @@ class _VINLookupPageState extends State<VINLookupPage> {
   Future<void> fetchProducts() async {
     try {
       List<Product> fetchedProducts = [];
-      for (String vin in vinList) {
-        // Make API call for each VIN
-        final response = await http.get(Uri.parse('${widget.apiUrl}?vin=$vin'));
-        if (response.statusCode == 200) {
-          // Parse the JSON response
-          final data = jsonDecode(response.body);
-          // Convert to a Product object
-          fetchedProducts.add(
-            Product(
-              name: '${data['Make'] ?? 'Unknown'} ${data['Model'] ?? ''}', // Combine Make and Model
-              imageUrl: 'https://via.placeholder.com/150', // Placeholder image
-              features: {
-                'Year': data['Year']?.toString() ?? 'N/A',
-                'Body': data['Body']?.toString() ?? 'N/A',
-                'Passenger Capacity': data['PassengerCapacity']?.toString() ?? 'N/A',
-                'Fuel Type': data['Fuel_Type']?.toString() ?? 'N/A',
-                'Drivetrain': data['Drivetrain']?.toString() ?? 'N/A',
-                'Transmission': data['Transmission_Description']?.toString() ?? 'N/A',
-              },
-              price: data['SellingPrice']?.toDouble() ?? 0.0, // Default to 0.0 if no price
-            ),
-          );
-        } else {
-          print('Error fetching data for VIN $vin: ${response.statusCode}');
+
+      // Fetch recommended VINs dynamically from the backend
+      final vinResponse = await http.get(Uri.parse('${widget.apiUrl}/recommend'));
+      if (vinResponse.statusCode == 200) {
+        // Decode recommended VINs
+        final List<dynamic> recommendedVins = jsonDecode(vinResponse.body);
+        List<String> vinList = recommendedVins.cast<String>(); // Ensure it's a List<String>
+
+        // Fetch details for each VIN
+        for (String vin in vinList) {
+          final response = await http.get(Uri.parse('${widget.apiUrl}/vehicle?vin=$vin'));
+          if (response.statusCode == 200) {
+            final data = jsonDecode(response.body);
+            fetchedProducts.add(
+              Product(
+                name: '${data['Make'] ?? 'Unknown'} ${data['Model'] ?? ''}',
+                imageUrl: 'https://via.placeholder.com/150',
+                features: {
+                  'Year': data['Year']?.toString() ?? 'N/A',
+                  'Body': data['Body']?.toString() ?? 'N/A',
+                  'Passenger Capacity': data['PassengerCapacity']?.toString() ?? 'N/A',
+                  'Fuel Type': data['Fuel_Type']?.toString() ?? 'N/A',
+                  'Drivetrain': data['Drivetrain']?.toString() ?? 'N/A',
+                  'Transmission': data['Transmission_Description']?.toString() ?? 'N/A',
+                },
+                price: data['SellingPrice']?.toDouble() ?? 0.0,
+              ),
+            );
+          } else {
+            print('Error fetching data for VIN $vin: ${response.statusCode}');
+          }
         }
+
+        setState(() {
+          products = fetchedProducts; // Update the products list
+          isLoading = false; // Stop the loading spinner
+        });
+      } else {
+        print('Error fetching recommended VINs: ${vinResponse.statusCode}');
+        setState(() {
+          isLoading = false; // Stop loading spinner if no VINs fetched
+        });
       }
-      setState(() {
-        products = fetchedProducts; // Update the products list
-        isLoading = false; // Stop the loading spinner
-      });
     } catch (e) {
-      print('Error fetching VIN data: $e');
+      print('Error fetching data: $e');
       setState(() {
-        isLoading = false; // Stop the loading spinner in case of error
+        isLoading = false; // Stop loading spinner in case of error
       });
     }
   }
@@ -84,6 +90,6 @@ class _VINLookupPageState extends State<VINLookupPage> {
       );
     }
 
-    return ProductComparisonPage(products: products);
+    return ProductComparisonPage(products: products); // Pass products to the comparison page
   }
 }

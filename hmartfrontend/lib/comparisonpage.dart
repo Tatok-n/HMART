@@ -24,264 +24,252 @@ class ProductComparisonPage extends StatefulWidget {
   _ProductComparisonPageState createState() => _ProductComparisonPageState();
 }
 
-class _ProductComparisonPageState extends State<ProductComparisonPage> {
-  int? selectedProductIndex; // Track the selected product
-  bool pageLoaded = false; // Track if the page is loaded for initial animation
-
-  final Color cardColor = Color(0xFF1E1E1E).withOpacity(0.9);
-  final Color textColor = Colors.white;
-  final Color secondaryTextColor = Colors.white70;
+class _ProductComparisonPageState extends State<ProductComparisonPage> with SingleTickerProviderStateMixin {
+  int currentPageIndex = 0; // Tracks the current page index
+  int? selectedProductIndex; // Tracks the selected product index
+  late AnimationController _backgroundController;
+  late Animation<Color?> _backgroundAnimation;
 
   @override
   void initState() {
     super.initState();
-    // Trigger the animation when the page loads
-    Future.delayed(Duration(milliseconds: 200), () {
-      setState(() {
-        pageLoaded = true;
-      });
-    });
+
+    // Background gradient animation
+    _backgroundController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    )..repeat(reverse: true);
+
+    _backgroundAnimation = ColorTween(
+      begin: Colors.deepPurple[900],
+      end: Colors.blueGrey[900],
+    ).animate(_backgroundController);
+  }
+
+  @override
+  void dispose() {
+    _backgroundController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Collect all unique features from all products
-    final Set<String> allFeatures = {};
-    for (var product in widget.products) {
-      allFeatures.addAll(product.features.keys);
+    // Divide products into groups of 3
+    final List<List<Product>> groupedProducts = [];
+    for (var i = 0; i < widget.products.length; i += 3) {
+      groupedProducts.add(widget.products.sublist(
+          i, i + 3 > widget.products.length ? widget.products.length : i + 3));
     }
+
+    // Get the products for the current page
+    final visibleProducts = groupedProducts[currentPageIndex];
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Vehicle Comparison',
-          style: TextStyle(color: textColor, fontSize: 35),
+          style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: Stack(
-        children: [
-          // Background Image
-          Container(
+      body: AnimatedBuilder(
+        animation: _backgroundAnimation,
+        builder: (context, child) {
+          return Container(
             width: MediaQuery.of(context).size.width,
             height: MediaQuery.of(context).size.height,
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('images/galaxy4.jpg'),
-                fit: BoxFit.cover,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [_backgroundAnimation.value!, Colors.black],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
             ),
-          ),
-          // Main Content
-          SingleChildScrollView(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 80, left: 16, right: 16, bottom: 16),
-                  child: Row(
+            child: child,
+          );
+        },
+        child: Column(
+          children: [
+            // Scrollable Product Pages
+            Expanded(
+              child: PageView.builder(
+                itemCount: groupedProducts.length,
+                physics: const BouncingScrollPhysics(),
+                onPageChanged: (index) {
+                  setState(() {
+                    currentPageIndex = index; // Update the current page index
+                    selectedProductIndex = null; // Reset selection when page changes
+                  });
+                },
+                itemBuilder: (context, pageIndex) {
+                  return Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: widget.products.asMap().entries.map((entry) {
-                      int index = entry.key;
-                      Product product = entry.value;
-
-                      bool isSelected = selectedProductIndex == index;
-
-                      return Expanded(
-                        flex: isSelected ? 3 : 2, // Adjust flex based on selection
-                        child: TweenAnimationBuilder<double>(
-                          duration: const Duration(milliseconds: 800),
-                          tween: Tween<double>(begin: 0, end: pageLoaded ? 1 : 0),
-                          curve: Curves.easeInOut,
-                          builder: (context, value, child) {
-                            return Opacity(
-                              opacity: value,
-                              child: Transform.translate(
-                                offset: Offset(0, 50 * (1 - value)),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      selectedProductIndex = index; // Update selected product
-                                    });
-                                  },
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 500),
-                                    curve: Curves.easeInOut,
-                                    margin: EdgeInsets.all(isSelected ? 8 : 16),
-                                    decoration: BoxDecoration(
-                                      color: cardColor,
-                                      borderRadius: BorderRadius.circular(15),
-                                      border: Border.all(
-                                        color: isSelected ? Colors.blueAccent : Colors.white.withOpacity(0.3),
-                                        width: isSelected ? 2 : 1,
-                                      ),
-                                      boxShadow: isSelected
-                                          ? [
-                                              BoxShadow(
-                                                color: Colors.blueAccent.withOpacity(0.4),
-                                                blurRadius: 10,
-                                                spreadRadius: 2,
-                                              )
-                                            ]
-                                          : [],
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(12.0),
-                                      child: Column(
-                                        children: [
-                                          Container(
-                                            decoration: BoxDecoration(
-                                              borderRadius: BorderRadius.circular(12),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.black.withOpacity(0.3),
-                                                  blurRadius: 10,
-                                                  spreadRadius: 2,
-                                                ),
-                                              ],
-                                            ),
-                                            child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(12),
-                                              child: Image.network(
-                                                product.imageUrl,
-                                                height: isSelected ? 150 : 120, // Grow image size
-                                                fit: BoxFit.contain,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Text(
-                                            product.name,
-                                            style: TextStyle(
-                                              color: textColor,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: isSelected ? 20 : 18, // Adjust text size
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 6,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.black54,
-                                              borderRadius: BorderRadius.circular(20),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.black.withOpacity(0.3),
-                                                  blurRadius: 8,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ],
-                                            ),
-                                            child: Text(
-                                              '\$${product.price.toStringAsFixed(2)}',
-                                              style: TextStyle(
-                                                color: textColor,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: isSelected ? 18 : 16, // Adjust price font size
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
+                    children: groupedProducts[pageIndex].asMap().entries.map((entry) {
+                      int productIndex = entry.key + pageIndex * 3;
+                      return _buildProductCard(entry.value, productIndex);
+                    }).toList(),
+                  );
+                },
+              ),
+            ),
+            // Comparison Table for the Current Page
+            Expanded(
+              child: SingleChildScrollView(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: _getAllFeatures(visibleProducts).map((feature) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.white.withOpacity(0.1),
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                        child: Row(
+                          children: [
+                            // Feature Name
+                            Expanded(
+                              child: Text(
+                                feature,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            );
-                          },
+                            ),
+                            // Feature Values for Visible Products
+                            ...visibleProducts.asMap().entries.map((entry) {
+                              bool isSelected =
+                                  selectedProductIndex == (entry.key + currentPageIndex * 3);
+                              return Expanded(
+                                child: Container(
+                                  decoration: isSelected
+                                      ? BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.blueAccent,
+                                            width: 2,
+                                          ),
+                                          borderRadius: BorderRadius.circular(8),
+                                        )
+                                      : null,
+                                  padding: const EdgeInsets.all(8),
+                                  child: Text(
+                                    entry.value.features[feature] ?? '-',
+                                    style: TextStyle(
+                                      color: isSelected ? Colors.blue : Colors.white70,
+                                      fontSize: 14,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ],
                         ),
                       );
                     }).toList(),
                   ),
                 ),
-                // Feature Comparison Table
-                TweenAnimationBuilder<double>(
-                  duration: const Duration(milliseconds: 800),
-                  tween: Tween<double>(begin: 0, end: pageLoaded ? 1 : 0),
-                  curve: Curves.easeInOut,
-                  builder: (context, value, child) {
-                    return Opacity(
-                      opacity: value,
-                      child: Transform.translate(
-                        offset: Offset(0, 50 * (1 - value)),
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 16),
-                          decoration: BoxDecoration(
-                            color: cardColor,
-                            borderRadius: BorderRadius.circular(15),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
-                              width: 1,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 15,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              ...allFeatures.map((feature) => Container(
-                                    decoration: BoxDecoration(
-                                      border: Border(
-                                        bottom: BorderSide(
-                                          color: Colors.white.withOpacity(0.1),
-                                          width: 1,
-                                        ),
-                                      ),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
-                                      horizontal: 16,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            feature,
-                                            style: TextStyle(
-                                              color: textColor,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ),
-                                        ...widget.products.map((product) {
-                                          return Expanded(
-                                            flex: 2,
-                                            child: Text(
-                                              product.features[feature] ?? '-',
-                                              style: TextStyle(
-                                                color: secondaryTextColor,
-                                              ),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          );
-                                        }).toList(),
-                                      ],
-                                    ),
-                                  )),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 20),
-              ],
+              ),
             ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductCard(Product product, int productIndex) {
+  bool isSelected = selectedProductIndex == productIndex;
+
+  return GestureDetector(
+    onTap: () {
+      setState(() {
+        selectedProductIndex = productIndex;
+      });
+    },
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+      margin: const EdgeInsets.all(8),
+      width: isSelected ? 220 : 180, // Grow width if selected
+      height: isSelected ? 300 : 250, // Adjust height as image is removed
+      decoration: BoxDecoration(
+        color: Colors.deepPurple[800]?.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(
+          color: isSelected ? Colors.blueAccent : Colors.purpleAccent,
+          width: isSelected ? 3 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isSelected ? Colors.blueAccent.withOpacity(0.5) : Colors.purpleAccent.withOpacity(0.5),
+            blurRadius: 15,
+            spreadRadius: 3,
           ),
         ],
       ),
-    );
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center, // Center content vertically
+          children: [
+            // Product Name
+            Text(
+              product.name,
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: isSelected ? 22 : 18, // Grow font size if selected
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            // Product Price
+            Text(
+              '\$${product.price.toStringAsFixed(2)}',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: isSelected ? 20 : 16, // Grow font size if selected
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+  // Collect all unique features for visible products
+  Set<String> _getAllFeatures(List<Product> products) {
+    final Set<String> allFeatures = {};
+    for (var product in products) {
+      allFeatures.addAll(product.features.keys);
+    }
+    return allFeatures;
   }
 }
