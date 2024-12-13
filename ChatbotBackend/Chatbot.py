@@ -184,9 +184,13 @@ def matchSpecToList(customerInput) :
         temperature=0.7  # allows for creative answers
     )
 
-    chatReply = response.choices[0].message.content
+    chatReply = response.choices[0].message.content.strip("'")
+
+    if spec_count == 1 or spec_count == 5 or spec_count == 8 or spec_count == 15:
+        chatReply = int(chatReply)
+    else :
+        chatReply = chatReply
     user_spec_list[spec_count] = chatReply
-    print("matched : " + chatReply)
     print(user_spec_list)
     return chatReply
 
@@ -416,61 +420,65 @@ def start_conversation():
     specOptions["Type"] = ["Used", "New"]
 
     with open("bodies.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["Body"] = list(csv.reader(csvfile))
+        specOptions["Body"] = [item for row in csv.reader(csvfile) for item in row]
 
     with open("capacity.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["PassengerCapacity"] = list(csv.reader(csvfile))
+        specOptions["PassengerCapacity"] = [item for row in csv.reader(csvfile) for item in row]
 
     with open("doors.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["Doors"] = list(csv.reader(csvfile))
+        specOptions["Doors"] = [item for row in csv.reader(csvfile) for item in row]
 
     with open("driveTrain.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["Drivetrain"] = list(csv.reader(csvfile))
+        specOptions["Drivetrain"] = [item for row in csv.reader(csvfile) for item in row]
 
     with open("engineBlocks.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["Engine_Block_Type"] = list(csv.reader(csvfile))
+        specOptions["Engine_Block_Type"] = [item for row in csv.reader(csvfile) for item in row]
 
     with open("engineCylinders.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["EngineCylinders"] = list(csv.reader(csvfile))
+        specOptions["EngineCylinders"] = [item for row in csv.reader(csvfile) for item in row]
 
     with open("engineDescs.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["Engine_Description"] = list(csv.reader(csvfile))
+        specOptions["Engine_Description"] = [item for row in csv.reader(csvfile) for item in row]
 
     with open("extColors.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["Ext_Color_Generic"] = list(csv.reader(csvfile))
+        specOptions["Ext_Color_Generic"] = [item for row in csv.reader(csvfile) for item in row]
 
     with open("fuels.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["Fuel_Type"] = list(csv.reader(csvfile))
+        specOptions["Fuel_Type"] = [item for row in csv.reader(csvfile) for item in row]
 
     with open("intColors.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["Int_Color_Generic"] = list(csv.reader(csvfile))
+        specOptions["Int_Color_Generic"] = [item for row in csv.reader(csvfile) for item in row]
 
     with open("makes.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["Make"] = list(csv.reader(csvfile))
+        specOptions["Make"] = [item for row in csv.reader(csvfile) for item in row]
 
     with open("mileage.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["Miles"] = list(csv.reader(csvfile))
+        specOptions["Miles"] = [item for row in csv.reader(csvfile) for item in row]
 
     with open("mktClasses.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["MarketClass"] = list(csv.reader(csvfile))
+        specOptions["MarketClass"] = [item for row in csv.reader(csvfile) for item in row]
 
     with open("models.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["Model"] = list(csv.reader(csvfile))
+        specOptions["Model"] = [item for row in csv.reader(csvfile) for item in row]
 
     with open("Price.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["SellingPrice"] = list(csv.reader(csvfile))
+        specOptions["SellingPrice"] = [item for row in csv.reader(csvfile) for item in row]
 
     with open("transmissions.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["Transmission"] = list(csv.reader(csvfile))
+        specOptions["Transmission"] = [item for row in csv.reader(csvfile) for item in row]
 
     with open("years.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["Year"] = list(csv.reader(csvfile))
+        specOptions["Year"] = [item for row in csv.reader(csvfile) for item in row]
 
     with open("cityMileage.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["CityMPG"] = list(csv.reader(csvfile))
+        specOptions["CityMPG"] = [item for row in csv.reader(csvfile) for item in row]
 
     with open("highwayMileage.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["HighwayMPG"] = list(csv.reader(csvfile))
+        specOptions["HighwayMPG"] = [item for row in csv.reader(csvfile) for item in row]
+
+
+
+    print(specOptions)
 
 
     reset_probed_specs()
@@ -495,9 +503,9 @@ def start_conversation():
 
 if __name__ == "__main__" :
     app.run(debug=True)
+    #start_conversation()
+    print(specOptions["Body"])
     #firstPrompt("i am interested")
-    print(unknown_specs[0])
-    print(generateQuestion())
 
 
 
