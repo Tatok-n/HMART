@@ -39,33 +39,17 @@ def get_yes_no(reply):
     global client, made_decision
     made_decision = True
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4",
         messages=[{
             "role": "system",
             "content": f"From the user's input {reply} I want you to determine what there answer to the question: "
         "'Do you want to use our car recommendation software or would you like to tell me what type of car you are looking for?"
-        " I want you to return a json response with a boolean 'interested' field that is a boolean, return true if the user wants to use the recommendation software"
+        " I want you to return a JSON response with a boolean 'interested' field that is a boolean, return true if the user wants to use the recommendation software"
         "and return false if the user does not want to use the recommendation software."
-        "Provide nothing but the json"
-        }],
-    response_format = {
-        "type": "json_schema",
-        "json_schema": {
-            "name": "yes_or_no",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "interested": {
-                        "description": "if the user is interested or not",
-                        "type": "boolean"
-                    },
-                    "additionalProperties": False
-                }
-            }
-        }
-    }
+        "Provide nothing but the JSON"
+        }]
     )
-
+    print(response.choices[0].message.content)
     return response.choices[0].message.content
 
 @app.route("/firstReply/<reply>", methods=["POST"])
@@ -102,12 +86,12 @@ def generateQuestion() :
     return response.choices[0].message.content
 
 def generateDefinition(currentSpec, options, reply) :
-    global client, main_conversation
+    global client, main_conversation,user_spec_list
 
     prompt = (
         f"Your role is to ask a help a user, as would an employee at a car delearship, and eventually get them to chose a car, however the customer needs an explanation as to what the current spec is."
         f"You should return a definition, or explanation that should allow a user to make a choice between {options}, and nothing else, be enthusiastic! Just as a nice dealer would be"
-        f"By the way, the reply from the customer was {reply}")
+        f"By the way, the reply from the customer was {reply}, and his current preferences are (ignoring the Nones) : {user_spec_list} ")
 
     message = {"role": "system", "content": prompt}
     main_conversation.append(message)
@@ -253,33 +237,18 @@ def checkRelevance(user_reply) :
     current_spec = unknown_specs[0]
 
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4",
         messages=[{
             "role": "system",
             "content": f"The user is currently being asked about {current_spec}, you should be able to differentiate if the user : gave a relevant response, seems to have made a choice to a particular option"
                        f",(having no preference is relevant), is unsure and needs clarification about {current_spec}, or is simply irrelevant."
-                       f"If the response is relevant or the user displays any level of interest in an option, return 0 as an integer in the 'choice' member of a json object, 1 if clarifications are necessary, 2 if it is irrelevant."
+                       f"If the response is relevant or the user displays any level of interest in an option, return 0 as an integer in the 'choice' member of a JSON object, 1 if clarifications are necessary, 2 if it is irrelevant."
                        f"Do not add anything that is not necessary, the user reply is : {user_reply}"
         }],
-        response_format={
-            "type": "json_schema",
-            "json_schema": {
-                "name": "relevance",
-                "schema": {
-                    "type": "object",
-                    "properties": {
-                        "choice": {
-                            "description": "if the user response is relevant, unsure or in need of clarification",
-                            "type": "integer"
-                        },
-                        "additionalProperties": False
-                    }
-                }
-            }
-        }
 
     )
     bot_reply = response.choices[0].message.content
+    print(bot_reply)
     return json.loads(bot_reply)["choice"]
 
 
@@ -492,7 +461,7 @@ def start_conversation():
     main_conversation.append(message)
 
     client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4",
         messages=main_conversation,
         max_tokens=100,
         temperature=0.7)
