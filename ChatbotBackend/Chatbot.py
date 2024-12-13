@@ -14,8 +14,11 @@ finalDataCollected = []
 finalExtractedList = []
 specOptions = {}
 
+user_spec_list = []
 
+main_conversation = []
 
+count =0
 
 questions = {
     "type": "Do you want a new car, an older car, or it does not matter.",
@@ -52,15 +55,16 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 def reset_probed_specs() :
     global unknown_specs
     unknown_specs = [
-   "body", "capacity", "MPG", "doors", "drivetrain", "engine block", "engine cylinders", "engine description",
-   "exterior colors", "fuels", "interior Color", "make",
-   "mileage", "mktClass", "model", "price", "transmission", "year"
+    "Type", "Year", "Make", "Model", "Body", "Doors",
+    "Ext_Color_Generic", "Int_Color_Generic", "EngineCylinders",
+    "Transmission", "Engine_Block_Type", "Engine_Description",
+    "Fuel_Type", "Drivetrain", "MarketClass", "PassengerCapacity",
+    "Miles", "CityMPG", "HighwayMPG", "SellingPrice"
 ]
 
 def returnFinalExtractedData():
     global finalDataCollected
     return finalDataCollected
-
 
 def get_yes_no(reply):
     global client
@@ -94,7 +98,6 @@ def get_yes_no(reply):
 
     return response.choices[0].message.content
 
-
 @app.route("/firstReply/<reply>", methods=["POST"])
 def firstPrompt(reply):
     global usingRecommendation
@@ -113,7 +116,113 @@ def generateQuirkyQuestion() :
     )
     return response["choices"][0]["message"]["content"].strip()
 
+def generateQuestion() :
+    global client, main_conversation, unknown_specs, specOptions
 
+    current_spec = unknown_specs[0]
+    prompt = (
+        f"Your role is to ask a question to a user, as would an employee at a car delearship, to get them to chose a car, eventually, you are going to have to asked about all specs in {unknown_specs}, buf for now you need to ask about {current_spec}."
+        f"You should return a question that should allow a user to make a choice between {specOptions[current_spec]}, and nothing else, be enthusiastic! Just as a nice dealer would be")
+
+
+    message = {"role": "system","content": prompt}
+    main_conversation.append(message)
+
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=main_conversation,
+        max_tokens=100,
+        temperature=0.7  # allows for creative answers
+    )
+
+    return response.choices[0].message.content
+
+def generateDefinition(currentSpec, options, reply) :
+    global client, main_conversation
+
+    prompt = (
+        f"Your role is to ask a help a user, as would an employee at a car delearship, and eventually get them to chose a car, however the customer needs an explanation as to what {currentSpec} is."
+        f"You should return a definition, or explanation that should allow a user to make a choice between {options}, and nothing else, be enthusiastic! Just as a nice dealer would be"
+        f"By the way, the reply from the customer was {reply}")
+
+    message = {"role": "system", "content": prompt}
+    main_conversation.append(message)
+
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=main_conversation,
+        max_tokens=100,
+        temperature=0.7
+    )
+
+    return response.choices[0].message.content
+
+def steerBackOnTrack(currentSpec, options, reply) :
+    global client, main_conversation
+
+    prompt = (
+        f"The user just replied {reply}, and is not relevant to the conversation to get them to pick a particular {currentSpec} among {options}."
+        f"What you should do is entertain them a bit in your first half of your response, but steer them back on track in your second half"
+        f"Remember, be enthusiastic! But keep it professional")
+
+    message = {"role": "system", "content": prompt}
+    main_conversation.append(message)
+
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=main_conversation,
+        max_tokens=250,
+        temperature=0.8  # allows for creative answers
+    )
+
+    return response.choices[0].message.content
+
+def matchSpecToList(customerInput) :
+    global user_spec_list, client, unknown_specs,specOptions
+
+    current_spec = unknown_specs[0]
+    options = specOptions[current_spec]
+
+
+
+    prompt = (f"Your role is to match a user's input one of the provided specs, as would an employee at a car delearship, you are going to be given a list of available options, amd you should pick whichever of the avaiable options most closely relates to what the user wants, if nothing matches, return an empty string"
+              f"You should return nothing else, just the selected option. "
+              f"The user input is : {customerInput}"
+              f"The available options are : {options}")
+
+    optional_extra = (f"additionally, for this spec return one of the following ['veryLow', 'low', 'medium', 'high', 'veryHigh'] instead of the available options, as it makes more sense, to map the given number to a range"
+                   f", you are going to be given a dictionary with ranges that dictate with range it should go in, you must absolutely only return one of those 5 string values, the mappings are :")
+
+    if current_spec == "Miles" :
+        mileageRange = {"veryLow": (0, 20000), "low": (20001, 40000), "medium": (40001, 60000), "high": (60001, 80000),"veryHigh": (80001, float('inf'))}
+        prompt += optional_extra
+        prompt += f"{mileageRange}"
+    elif current_spec == "CityMPG" :
+        cityRange = {"veryLow": (0, 20), "low": (21, 40), "medium": (41, 60), "high": (61, 80),"veryHigh": (81, float('inf'))}
+        prompt += optional_extra
+        prompt += f"{cityRange}"
+    elif current_spec == "HighwayMPG" :
+        highwayRange = {"veryLow": (0, 25), "low": (26, 50), "medium": (51, 75), "high": (76, 100),"veryHigh": (101, float('inf'))}
+        prompt += optional_extra
+        prompt += f"{highwayRange}"
+    elif current_spec == "SellingPrice" :
+        priceRange = {"veryLow": (0, 10000), "low": (10001, 25000), "medium": (25001, 50000), "high": (50001, 75000),"veryHigh": (75001, float('inf'))}
+        prompt += optional_extra
+        prompt += f"{priceRange}"
+
+
+    conversation = [{"role": "system","content": prompt}]
+
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=conversation,
+        max_tokens=100,
+        temperature=0.7  # allows for creative answers
+    )
+
+    chatReply = response.choices[0].message.content.strip()
+    user_spec_list.append(chatReply)
+    return chatReply
 
 @app.route("/firstQuestion/", methods=["GET"])
 def firstQuestion() :
@@ -217,6 +326,31 @@ def postReply(reply) :
         return generateQuirkyQuestion()
     
 
+def handleConverstaion(reply) :
+    global main_conversation, client, unknown_specs, specOptions, usingRecommendation
+
+    if len(unknown_specs) == 0 :
+        return "We hope you are happy with your choice"
+    if (usingRecommendation):
+        choice = checkRelevance(reply)
+        json_choice = json.load(choice)
+        choice = json_choice["choice"]
+
+        if (choice == 0) :
+            matchSpecToList(reply)
+            unknown_specs.pop(0)
+            if len(unknown_specs) == 0:
+                return "We hope you are happy with your choice"
+            return generateQuestion()
+
+        elif (choice == 1) :
+            return generateDefinition(unknown_specs[0],specOptions[unknown_specs[0]],reply)
+
+        elif (choice == 2) :
+            return steerBackOnTrack(unknown_specs[0],specOptions[unknown_specs[0]],reply)
+
+
+
 
 
 
@@ -237,21 +371,24 @@ def steerTowardsResponse(user_reply, question) :
     conversation.append({"role": "assistant", "content": chatbot_reply_off_topic})
     return chatbot_reply_off_topic
 
+# returns choice : 0 is relevant, 1 is needs a definition or 2 if conversation steering is needed
+def checkRelevance(user_reply) :
+    global client,unknown_specs
 
-def checkRelevance(user_reply, question) :
-    global client
-    relevance_check_prompt = (
-        f"The user answered: '{user_reply}' to the question: '{question}'. "
-        "Is the response relevant to the question? Reply with 'yes' or 'no' only."
-    )
-    relevance_check_response = client.chat.completions.create(
-        model="gpt-4",
-        messages=conversation + [{"role": "assistant", "content": relevance_check_prompt}],
-        max_tokens=10,
-        temperature=0
-    )
-    return relevance_check_response["choices"][0]["message"]["content"].strip().lower()
+    current_spec = unknown_specs[0]
 
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{
+            "role": "system",
+            "content": f"The user is currently being asked about {current_spec}, you should be able to differentiate if the user : gave a relevant response (having no preference is relevant), is unsure and needs clarification about {current_spec}, or is simply irrelevant."
+                       f"If the response is relevant, return 0 as an integer in the 'choice' member of a json object, 1 if clarifications are necessary, 2 if it is irrelevant."
+                       f"Do not add anything that is not necessary, the user reply is : {user_reply}"
+        }]
+
+    )
+
+    return response.choices[0].message.content
 
 def ask_gpt(string):
     global client
@@ -432,67 +569,94 @@ def recommend_api():
     return jsonify(response)
 
 
-def generateOptions():
-    global specOptions
+def start_conversation():
+    global specOptions, unknown_specs, main_conversation
+    specOptions["Type"] = ["Used", "New"]
 
     with open("bodies.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["body"] = list(csv.reader(csvfile))
+        specOptions["Body"] = list(csv.reader(csvfile))
 
     with open("capacity.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["capacity"] = list(csv.reader(csvfile))
+        specOptions["PassengerCapacity"] = list(csv.reader(csvfile))
 
     with open("doors.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["doors"] = list(csv.reader(csvfile))
+        specOptions["Doors"] = list(csv.reader(csvfile))
 
     with open("driveTrain.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["drivetrain"] = list(csv.reader(csvfile))
+        specOptions["Drivetrain"] = list(csv.reader(csvfile))
 
     with open("engineBlocks.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["engine block"] = list(csv.reader(csvfile))
+        specOptions["Engine_Block_Type"] = list(csv.reader(csvfile))
 
     with open("engineCylinders.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["engine cylinders"] = list(csv.reader(csvfile))
+        specOptions["EngineCylinders"] = list(csv.reader(csvfile))
 
     with open("engineDescs.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["engine description"] = list(csv.reader(csvfile))
+        specOptions["Engine_Description"] = list(csv.reader(csvfile))
 
     with open("extColors.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["exterior colors"] = list(csv.reader(csvfile))
+        specOptions["Ext_Color_Generic"] = list(csv.reader(csvfile))
 
     with open("fuels.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["fuels"] = list(csv.reader(csvfile))
+        specOptions["Fuel_Type"] = list(csv.reader(csvfile))
 
     with open("intColors.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["interior Color"] = list(csv.reader(csvfile))
+        specOptions["Int_Color_Generic"] = list(csv.reader(csvfile))
 
     with open("makes.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["make"] = list(csv.reader(csvfile))
+        specOptions["Make"] = list(csv.reader(csvfile))
 
     with open("mileage.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["mileage"] = list(csv.reader(csvfile))
+        specOptions["Miles"] = list(csv.reader(csvfile))
 
     with open("mktClasses.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["mktClass"] = list(csv.reader(csvfile))
+        specOptions["MarketClass"] = list(csv.reader(csvfile))
 
     with open("models.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["model"] = list(csv.reader(csvfile))
+        specOptions["Model"] = list(csv.reader(csvfile))
 
     with open("Price.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["price"] = list(csv.reader(csvfile))
+        specOptions["SellingPrice"] = list(csv.reader(csvfile))
 
     with open("transmissions.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["transmission"] = list(csv.reader(csvfile))
+        specOptions["Transmission"] = list(csv.reader(csvfile))
 
     with open("years.csv", newline='', encoding='utf-8') as csvfile :
-        specOptions["year"] = list(csv.reader(csvfile))
+        specOptions["Year"] = list(csv.reader(csvfile))
 
-    pass
+    with open("cityMileage.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["CityMPG"] = list(csv.reader(csvfile))
+
+    with open("highwayMileage.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["HighwayMPG"] = list(csv.reader(csvfile))
+
+
+    reset_probed_specs()
+
+    #setup the bot to answer to questions
+    start_prompt = (
+        f"You are going to be acting as a kind employee at a car dealership, you want to elicit particular specs out of a customer through a series of questions, someone else will make sure all the specs are correctly identified"
+        f", but all you need to make sure to do is ask the correct sequence of questions, the specs themselves are {unknown_specs}")
+
+    message = {"role": "system","content": start_prompt}
+    main_conversation.append(message)
+
+    client.chat.completions.create(
+        model="gpt-4o",
+        messages=main_conversation,
+        max_tokens=100,
+        temperature=0.7)
+
+
+
 
 
 if __name__ == "__main__" :
     #app.run(debug=True)
     #firstPrompt("i am interested")
-    generateOptions()
+    start_conversation()
+    print(unknown_specs[0])
+    print(generateQuestion())
 
 
 
