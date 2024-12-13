@@ -1,8 +1,8 @@
-import json
-
+import json, os
 import numpy as np
-import openai
+from openai import OpenAI
 import pandas as pd
+import csv
 from flask_cors import CORS
 from flask import Flask, request, jsonify
 
@@ -12,6 +12,8 @@ conversation = [{"role": "system", "content": "You are a helpful car salesman ch
 DataCollected ={}
 finalDataCollected = []
 finalExtractedList = []
+specOptions = {}
+
 
 
 
@@ -38,47 +40,73 @@ questions = {
 }
 
 
-probed_specs = [
-   "type", "year", "make", "model", "body", "door", "extColor", "intColor",
-   "engineCylinder", "transmission", "engineBlock", "engineDesc", "fuel",
-   "driveTrain", "mktClass", "capacity", "mileage", "mpg", "price"
-]
+unknown_specs = []
 
 
 questionCounter = 0
 app = Flask(__name__)
 CORS(app)
-chosenPath = 0
+usingRecommendation = False
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+def reset_probed_specs() :
+    global unknown_specs
+    unknown_specs = [
+   "body", "capacity", "MPG", "doors", "drivetrain", "engine block", "engine cylinders", "engine description",
+   "exterior colors", "fuels", "interior Color", "make",
+   "mileage", "mktClass", "model", "price", "transmission", "year"
+]
 
 def returnFinalExtractedData():
     global finalDataCollected
     return finalDataCollected
 
 
+def get_yes_no(reply):
+    global client
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{
+            "role": "system",
+            "content": f"From the user's input {reply} I want you to determine what there answer to the question: "
+        "'Do you want to use our car recommendation software or would you like to tell me what type of car you are looking for?"
+        " I want you to return a json response with a boolean 'interested' field that is a boolean, return true if the user wants to use the recommendation software"
+        "and return false if the user does not want to use the recommendation software."
+        "Provide nothing but the json"
+        }],
+    response_format = {
+        "type": "json_schema",
+        "json_schema": {
+            "name": "yes_or_no",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "interested": {
+                        "description": "if the user is interested or not",
+                        "type": "boolean"
+                    },
+                    "additionalProperties": False
+                }
+            }
+        }
+    }
+    )
+
+    return response.choices[0].message.content
+
+
 @app.route("/firstReply/<reply>", methods=["POST"])
 def firstPrompt(reply):
-    global chosenPath
-    response = request.view_args['reply']
-    choice_of_model = (
-        f"From the user's input {response} I want you to determine what there answer to the question: "
-        "'Do you want to use our car recommendation software or would you like to tell me what type of car you are looking for?"
-        " I want you to return an integer, return 0 if the user wants to use the recommendation software"
-        "and return 1 if the user does not want to use the recommendation software."
-        "Do not povide any additional explanation, text, or characters only return the integer."
-        "Do not give a sentemce, give a single digit response.")
-    choice = ask_gpt(choice_of_model)
-    chosenPath = int(choice)
-    try:
-          # Convert the string response to an integer
-        return "0"  # Returns the user choice, hard coded to 0 for now
-    except ValueError:
-        print(f"Unexpected response from GPT: {choice}")
-        return -1
+    global usingRecommendation
+    #reply = request.view_args['reply']
+    choice = get_yes_no(reply)
+    jsonResponse = json.loads(choice)
+    usingRecommendation = jsonResponse["interested"]
 
 def generateQuirkyQuestion() :
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+    global client
+    response = client.chat.completions.create(
+        model="gpt-4",
         messages=conversation,
         max_tokens=100,
         temperature=0.7  # allows for creative answers
@@ -91,35 +119,35 @@ def generateQuirkyQuestion() :
 def firstQuestion() :
     global conversation
     global questions
-    global probed_specs
-    conversation.append({"role": "assistant", "content": questions[probed_specs[0]]})
+    global unknown_specs
+    conversation.append({"role": "assistant", "content": questions[unknown_specs[0]]})
     return generateQuirkyQuestion()
 
 @app.route("/replies/<reply>", methods=["POST"])
 def postReply(reply) :
     global conversation
     global questions
-    global probed_specs
+    global unknown_specs
     global questionCounter
     global DataCollected
-    global chosenPath
+    global usingRecommendation
     global finalExtractedList
     global finalDataCollected
     
 
     user_reply = request.view_args['reply']
     conversation.append({"role": "user", "content": user_reply})
-    chosenPath = 0
-    if (chosenPath == 0) : #user wants to use the recomendation software, returns DataCollected
-        question = questions[probed_specs[questionCounter]]
+    usingRecommendation = 0
+    if usingRecommendation : #user wants to use the recomendation software, returns DataCollected
+        question = questions[unknown_specs[questionCounter]]
         relevance = checkRelevance(user_reply, question)
         if relevance == "no" :
             return steerTowardsResponse(user_reply, question)
         else :
-            DataCollected[probed_specs[questionCounter]] = user_reply
+            DataCollected[unknown_specs[questionCounter]] = user_reply
             questionCounter += 1
-            if questionCounter < (len(probed_specs) -1):
-                conversation.append({"role": "assistant", "content": questions[probed_specs[questionCounter]]})
+            if questionCounter < (len(unknown_specs) -1):
+                conversation.append({"role": "assistant", "content": questions[unknown_specs[questionCounter]]})
                 return generateQuirkyQuestion()
             else:
                 summarizeAnswers()
@@ -129,17 +157,17 @@ def postReply(reply) :
         extractedList = []
         
         # this block will determine the specs that were not extracted from the user's prompt and get you a list of specs that were not scraped from user prommpt
-        for i in range(0, len(probed_specs)):
+        for i in range(0, len(unknown_specs)):
             what_to_do = (
-                f"The input from the user '{user_spec}' is their desired car description. I want you to look at the input and determine if the input has any information about '{probed_specs[i]}'"
-                f"If yes, then generate a one work answer that will cover the user's wants for that specific spec. If no information in the input is given for '{probed_specs[i]}', then set that element as None."
+                f"The input from the user '{user_spec}' is their desired car description. I want you to look at the input and determine if the input has any information about '{unknown_specs[i]}'"
+                f"If yes, then generate a one work answer that will cover the user's wants for that specific spec. If no information in the input is given for '{unknown_specs[i]}', then set that element as None."
                 "You must return a single word for every element. No comments are allowed.")
             extracted_info = ask_gpt(what_to_do)
             extractedList.append(extracted_info)
         print(extractedList)
 
         for index in range(0, len(extractedList)):
-            summarize_answers = (f" I have a user input '{extractedList[index]}', to the spec of a car '{probed_specs[index]}' I gave them freedom to write in any format they want"
+            summarize_answers = (f" I have a user input '{extractedList[index]}', to the spec of a car '{unknown_specs[index]}' I gave them freedom to write in any format they want"
                             "Now you need to make the DataCollected[key] a one word answer. If you determine that the user input does not care for that option, make the answer None."
                             " Your response must only contain one-word, without any additional text, characters, explanation, or comments. You must return that response as a string.  Examples are below:"
                             f"So: 'Are you looking for a new or used car?' the answer should be either new, used, or None"
@@ -167,13 +195,13 @@ def postReply(reply) :
         for i in range(len(finalExtractedList)):
             if finalExtractedList[i] == "None":
                 # Ask a question for the missing spec
-                question = questions[probed_specs[i]]
+                question = questions[unknown_specs[i]]
                 response = ask_gpt(f"{question}. User said: {user_reply}")
                 
                 # Check if a valid response was received
                 if response and response.lower() != "none":
                     finalExtractedList[i] = response
-                    DataCollected[probed_specs[i]] = response
+                    DataCollected[unknown_specs[i]] = response
                 else:
                     none_count += 1  # Track how many are still unanswered
 
@@ -184,23 +212,23 @@ def postReply(reply) :
 
         # If there are still unanswered specs then ask the next missing one
         next_missing_index = finalExtractedList.index("None")
-        next_question = questions[probed_specs[next_missing_index]]
+        next_question = questions[unknown_specs[next_missing_index]]
         conversation.append({"role": "assistant", "content": next_question})
         return generateQuirkyQuestion()
     
 
-        
 
 
 
 def steerTowardsResponse(user_reply, question) :
+    global client
     off_topic_response_prompt = (
         f"The user gave an off-topic answer: '{user_reply}'. "
         "Politely acknowledge their comment, provide a helpful or relevant reply, "
         f"and then steer the conversation back to the original question: '{question}'."
     )
-    off_topic_response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+    off_topic_response = client.chat.completions.create(
+        model="gpt-4",
         messages=conversation + [{"role": "assistant", "content": off_topic_response_prompt}],
         max_tokens=100,
         temperature=0.7
@@ -211,12 +239,13 @@ def steerTowardsResponse(user_reply, question) :
 
 
 def checkRelevance(user_reply, question) :
+    global client
     relevance_check_prompt = (
         f"The user answered: '{user_reply}' to the question: '{question}'. "
         "Is the response relevant to the question? Reply with 'yes' or 'no' only."
     )
-    relevance_check_response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+    relevance_check_response = client.chat.completions.create(
+        model="gpt-4",
         messages=conversation + [{"role": "assistant", "content": relevance_check_prompt}],
         max_tokens=10,
         temperature=0
@@ -225,19 +254,20 @@ def checkRelevance(user_reply, question) :
 
 
 def ask_gpt(string):
+    global client
     # Ask ChatGPT
     prompt = f"'{string}'"
 
     try:
-        completion = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # Use gpt-3.5-turbo
+        completion = client.chat.completions.create(
+            model="gpt-4",  # Use gpt-4
             messages=[{"role": "system", "content": "You are a helpful assistant."},
                       {"role": "user", "content": prompt}],
             max_tokens=50,
             temperature=0.7
         )
         # Access the response safely
-        return completion['choices'][0]['message']['content'].strip()
+        return completion["choices"][0]["message"]["content"].strip()
     except KeyError:
         print("Error: Invalid response format")
         return "Sorry, something went wrong."
@@ -277,7 +307,7 @@ def summarizeAnswers():
     load_rules_from_csv(questions)
     
     for index, key in enumerate(DataCollected):
-        summarize_answers = (f" I have a user input '{DataCollected[key]}', to the spec of a car '{probed_specs[index]}' I gave them freedom to write in any format they want"
+        summarize_answers = (f" I have a user input '{DataCollected[key]}', to the spec of a car '{unknown_specs[index]}' I gave them freedom to write in any format they want"
                             "Now you need to make the DataCollected[key] a one word answer. If you determine that the user input does not care for that option, make the answer None."
                             " Your response must only contain one-word, without any additional text, characters, explanation, or comments. You must return that response as a string. "
                             f"The set of rules that you must use to know what to return is '{rules}'. So questions that are similar to the the keys from '{rules}' will use values from '{rules}' only."
@@ -289,7 +319,6 @@ def summarizeAnswers():
         if final_extraction_info == "None":
             finalDataCollected.append(None)
         finalDataCollected.append(final_extraction_info)
-
 
     print(finalDataCollected) #for mathis
     print("Please wait while I search for the dealership's recommendations.")
@@ -403,10 +432,67 @@ def recommend_api():
     return jsonify(response)
 
 
+def generateOptions():
+    global specOptions
+
+    with open("bodies.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["body"] = list(csv.reader(csvfile))
+
+    with open("capacity.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["capacity"] = list(csv.reader(csvfile))
+
+    with open("doors.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["doors"] = list(csv.reader(csvfile))
+
+    with open("driveTrain.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["drivetrain"] = list(csv.reader(csvfile))
+
+    with open("engineBlocks.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["engine block"] = list(csv.reader(csvfile))
+
+    with open("engineCylinders.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["engine cylinders"] = list(csv.reader(csvfile))
+
+    with open("engineDescs.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["engine description"] = list(csv.reader(csvfile))
+
+    with open("extColors.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["exterior colors"] = list(csv.reader(csvfile))
+
+    with open("fuels.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["fuels"] = list(csv.reader(csvfile))
+
+    with open("intColors.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["interior Color"] = list(csv.reader(csvfile))
+
+    with open("makes.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["make"] = list(csv.reader(csvfile))
+
+    with open("mileage.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["mileage"] = list(csv.reader(csvfile))
+
+    with open("mktClasses.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["mktClass"] = list(csv.reader(csvfile))
+
+    with open("models.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["model"] = list(csv.reader(csvfile))
+
+    with open("Price.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["price"] = list(csv.reader(csvfile))
+
+    with open("transmissions.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["transmission"] = list(csv.reader(csvfile))
+
+    with open("years.csv", newline='', encoding='utf-8') as csvfile :
+        specOptions["year"] = list(csv.reader(csvfile))
+
+    pass
 
 
-
-
+if __name__ == "__main__" :
+    #app.run(debug=True)
+    #firstPrompt("i am interested")
+    generateOptions()
 
 
 
