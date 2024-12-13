@@ -107,19 +107,12 @@ class _ChatScreenState extends State<ChatScreen> {
     String response = "";
     String displayMsg = "";
     if (questionCounter == 0) { //if no questions have been asked before, then greet the user with the fisrt question
-        response = await apicaller.acceptRest(messageContent, "/firstReply/");
-        if (response == "1") {
-          quizReccomendation = false;
-          displayMsg = "There is a couple more information that I need before we can find you the right car. I will ask you some more questions to help filter the options ";
-        } else {
-          quizReccomendation = true;
-          displayMsg = await apicaller.acceptRest("", "/firstQuestion/");
-        }
-        questionCounter++;
+      response = await apicaller.acceptRest(messageContent, "/firstReply/");
+      displayMsg = response;
+      questionCounter++;
     } else { //otherwise accept user input and process
       displayMsg = await apicaller.acceptRest(messageContent, "/replies/");
     }
-
     _sendMessage(false, displayMsg);
   }
 
